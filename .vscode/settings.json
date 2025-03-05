@@ -49,5 +49,6 @@
 
     "files.exclude": {
         "**/*.o": true,
+        "dist": true,
     }
 }
