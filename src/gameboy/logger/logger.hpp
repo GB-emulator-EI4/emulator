@@ -4,10 +4,22 @@
 
 class Logger {
     public:
-        Logger();
+        // Get instance
+        static Logger* getInstance();
+
+        // Destructor
         ~Logger();
 
+        // Functions
+        void log(const string &message);
+        void error(const string &message);
+
     private:
+        // Instance
+        static Logger* instance;
+
+        // Constructors
+        Logger();
 
     protected:
 

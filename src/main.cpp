@@ -2,16 +2,21 @@
 
 using namespace std;
 
-#include "gameboy/gameboy.hpp"
+#include "constants/constants.hpp"
 
-// Constants
-#define BOOT_ROM_PATH "roms/boot/dmg0_boot.bin"
+#include "gameboy/gameboy.hpp"
 
 int main() {
     cout << "Starting Gameboy Emulator" << endl;
 
-    Gameboy gameboy(BOOT_ROM_PATH);
-    gameboy.run();
+    // Get instance (will init the Gameboy)
+    Gameboy* gameboy = Gameboy::getInstance();
+    
+    // Load ROMs
+    gameboy->setBootRom(BOOT_ROM_PATH); 
+
+    // Free everything
+    delete gameboy;
 
     return 0;
 }

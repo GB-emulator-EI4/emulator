@@ -40,12 +40,15 @@ using namespace std;
 
 class Memory {
     public:
-        Memory(const string &bootromPath);
+        Memory();
         ~Memory();
 
         // Memory read functions
         char& fetch8(int &address); // Fetch 8-bit value from memory
-        int& fetch16(int &address); // Fetch 16-bit value from memory
+        // int& fetch16(int &address); // Fetch 16-bit value from memory
+
+        // ROM load functions
+        void loadBootrom(const string &bootromPath); // Load the boot ROM
 
     private:
         char bootrom[BOOTROM_SIZE]; // 256B
@@ -65,8 +68,7 @@ class Memory {
         char hram[HRAM_SIZE]; // 128B
 
         // Init functions
-        void loadBootrom(const string &bootromPath); // Load the boot ROM
-        void loadROM(); // Load the ROM
-        void loadROMFixed(); // Load the fixed ROM
-        void loadROMBanked(); // Load the banked ROM
+        // void loadROM(); // Load the ROM
+        // void loadROMFixed(); // Load the fixed ROM
+        // void loadROMBanked(); // Load the banked ROM
 };

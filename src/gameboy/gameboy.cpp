@@ -11,17 +11,47 @@ using namespace std;
 
 /*
 
+    Get instance
+
+*/
+
+Gameboy* Gameboy::getInstance() {
+    if (!instance) instance = new Gameboy();
+    return instance;
+}
+
+Gameboy* Gameboy::instance = nullptr;
+
+/*
+
     Constructors and Destructors
 
 */
 
-Gameboy::Gameboy(const string &bootromPath) : running(true), CPU(), Memory(bootromPath), Logger() {
+Gameboy::Gameboy() : running(true), cpu(new CPU(this)), memory(new Memory()), logger(Logger::getInstance()) {
     std::cout << "Gameboy Constructor" << std::endl;
 }
 
 Gameboy::~Gameboy() {
-    // Do nothing
+    delete cpu;
+    delete memory;
+
+    // Delete logger
+    delete logger;
+
+    instance = nullptr;
+
+    std::cout << "Gameboy Destructor" << std::endl;
 }
+
+/*
+
+    Init functions
+
+*/
+
+
+
 
 /*
 
@@ -33,6 +63,6 @@ void Gameboy::run() {
     std::cout << "Gameboy Running" << std::endl;
 
     while(this->running) {
-        CPU::cycle();
+        this->cpu->cycle();
     }
 }

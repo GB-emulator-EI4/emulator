@@ -12,13 +12,12 @@ using namespace std;
 
 */
 
-Memory::Memory(const string &bootromPath) : bootrom{}, romFixed{}, romBanked{}, vram{}, extram{}, wramFixed{}, wramBanked{}, oam{}, hram{} {
-    // Load boot ROM
-    this->loadBootrom(bootromPath);
+Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), hram() {
+    cout << "Memory Constructor" << endl;
 }
 
 Memory::~Memory() {
-    // Do nothing
+    cout << "Memory Destructor" << endl;
 }
 
 /*
