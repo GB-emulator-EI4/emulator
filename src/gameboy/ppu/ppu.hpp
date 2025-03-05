@@ -40,7 +40,7 @@ private:
 
     // PPU internal state
     int cycleCounter; // Tracks cycles within a scanline
-    int currentScanline;
+    int currentScanline; // LY register
 
     // Frame buffer to store pixel data
     std::array<uint8_t, ScreenWidth * ScreenHeight> framebuffer;
