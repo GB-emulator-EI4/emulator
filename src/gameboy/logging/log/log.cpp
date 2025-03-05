@@ -11,11 +11,11 @@ using namespace std;
 */
 
 Log::Log(const string &domain) : domain(domain), logger(Logger::getInstance()) {
-    logger->log(LOG_LOG ,domain, "Log Constructor");
+    logger->log(LOG_LOG, domain, "Log Constructor");
 }
 
 Log::~Log() {
-    logger->log(LOG_ERROR, domain, "Log Destructor");
+    
 }
 
 /*

@@ -29,21 +29,25 @@ Memory::~Memory() {
 
 */
 
-void Memory::loadBootrom(const string &bootromPath) {
-    // Open boot ROM file
-    ifstream bootromFile(bootromPath, ios::binary);
+void Memory::loadRom(const int &startAdress, const string &romPath, const int &size) {
+    logger->log("Loading ROM at address " + to_string(startAdress) + " with size " + to_string(size));
+
+    // Open ROM file
+    ifstream romFile(romPath, ios::binary);
 
     // Check if the file was opened successfully
-    if (!bootromFile.is_open()) {
-        logger->error("Error: Could not open boot ROM file");
+    if(!romFile.is_open()) {
+        logger->error("Error: Could not open ROM file : " + romPath); 
         exit(1);
     }
 
-    // Read boot ROM file
-    bootromFile.read(this->bootrom, BOOTROM_SIZE);
+    // Read ROM file
+    romFile.read(this->romFixed, size);
 
-    // Close boot ROM file
-    bootromFile.close();
+    // Close ROM file
+    romFile.close();
+
+    logger->log("ROM loaded successfully");
 }
 
 char& Memory::fetch8(int &address) {

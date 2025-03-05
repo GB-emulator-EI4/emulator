@@ -50,7 +50,7 @@ class Memory {
         // int& fetch16(int &address); // Fetch 16-bit value from memory
 
         // ROM load functions
-        void loadBootrom(const string &bootromPath); // Load the boot ROM
+        void loadRom(const int &startAdress, const string &bootromPath, const int &size); // Load the boot ROM
 
     private:
         Log* logger;
