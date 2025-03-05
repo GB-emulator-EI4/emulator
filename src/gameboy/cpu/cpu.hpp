@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../logging/log/log.hpp"
+
 #include "../gameboy.hpp"
 
 // Forward declaration
@@ -15,6 +17,8 @@ class CPU {
     private:
         // Gameboy ref
         Gameboy* gameboy;
+
+        Log* logger;
 
         // Registers
         char a, f, b, c, d, e, h, l; // 8-bit registers

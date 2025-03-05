@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#include "../logging/log/log.hpp"
+
 // Memory block sizes
 #define BOOTROM_SIZE 256
 
@@ -51,6 +53,8 @@ class Memory {
         void loadBootrom(const string &bootromPath); // Load the boot ROM
 
     private:
+        Log* logger;
+
         char bootrom[BOOTROM_SIZE]; // 256B
 
         char romFixed[ROM_FIXED_SIZE]; // 16KB

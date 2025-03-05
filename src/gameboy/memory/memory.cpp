@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#include "../logging/logger/logger.hpp"
+
 #include "memory.hpp"
 
 /*
@@ -13,11 +15,12 @@ using namespace std;
 */
 
 Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), hram() {
-    cout << "Memory Constructor" << endl;
+    logger = Logger::getInstance()->getLogger("Memory");
+    logger->log("Memory Constructor");
 }
 
 Memory::~Memory() {
-    cout << "Memory Destructor" << endl;
+    logger->log("Memory Destructor");
 }
 
 /*
@@ -32,7 +35,7 @@ void Memory::loadBootrom(const string &bootromPath) {
 
     // Check if the file was opened successfully
     if (!bootromFile.is_open()) {
-        cout << "Error: Could not open boot ROM file" << endl;
+        logger->error("Error: Could not open boot ROM file");
         exit(1);
     }
 
@@ -72,6 +75,6 @@ char& Memory::fetch8(int &address) {
     if (address >= HRAM_OFFSET) return this->hram[address - HRAM_OFFSET];
 
     // If the address is not in any of the memory blocks, throw an error
-    cout << "Error: Invalid memory address, reading at address " << address << endl;
+    logger->error("Error: Invalid memory address, reading at address " + to_string(address));
     exit(1);
 }

@@ -7,7 +7,7 @@ using namespace std;
 
 #include "cpu/cpu.hpp"
 #include "memory/memory.hpp"
-#include "logger/logger.hpp"
+#include "logging/logger/logger.hpp"
 
 /*
 
@@ -28,20 +28,18 @@ Gameboy* Gameboy::instance = nullptr;
 
 */
 
-Gameboy::Gameboy() : running(true), cpu(new CPU(this)), memory(new Memory()), logger(Logger::getInstance()) {
-    std::cout << "Gameboy Constructor" << std::endl;
+Gameboy::Gameboy() : running(true), cpu(new CPU(this)), memory(new Memory()) {
+    logger = Logger::getInstance()->getLogger("Gameboy");
+    logger->log("Gameboy Constructor");
 }
 
 Gameboy::~Gameboy() {
     delete cpu;
     delete memory;
 
-    // Delete logger
-    delete logger;
-
     instance = nullptr;
 
-    std::cout << "Gameboy Destructor" << std::endl;
+    logger->log("Gameboy Destructor");
 }
 
 /*
@@ -60,7 +58,7 @@ Gameboy::~Gameboy() {
 */
 
 void Gameboy::run() {
-    std::cout << "Gameboy Running" << std::endl;
+    logger->log("Gameboy starting");
 
     while(this->running) {
         this->cpu->cycle();

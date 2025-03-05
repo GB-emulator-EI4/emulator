@@ -6,7 +6,8 @@ using namespace std;
 
 #include "cpu/cpu.hpp"
 #include "memory/memory.hpp"
-#include "logger/logger.hpp"
+#include "logging/logger/logger.hpp"
+#include "logging/log/log.hpp"
 
 // Forward declaration
 class CPU;
@@ -23,8 +24,6 @@ class Gameboy {
         CPU* cpu;
         Memory* memory;
 
-        Logger* logger;
-
         // Init functions
         inline void setBootRom(const string &bootRomPath) { this->memory->loadBootrom(bootRomPath); }
 
@@ -32,10 +31,12 @@ class Gameboy {
         void run();
 
     private:
-        static Gameboy* instance;    
+        static Gameboy* instance;
 
         // Constructors
         Gameboy();
+
+        Log* logger;
     
         // Vars
         bool running = true;

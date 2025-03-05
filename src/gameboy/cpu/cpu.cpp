@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#include "../logging/logger/logger.hpp"
+
 #include "cpu.hpp"
 
 /*
@@ -11,11 +13,12 @@ using namespace std;
 */
 
 CPU::CPU(Gameboy* gameboy) :  gameboy(gameboy), a(0), f(0), b(0), c(0), d(0), e(0), h(0), l(0), sp(0), pc(0) {
-    cout << "CPU Constructor" << endl;
+    logger = Logger::getInstance()->getLogger("CPU");
+    logger->log("CPU Constructor");
 }
 
 CPU::~CPU() {
-    cout << "CPU Destructor" << endl;
+    logger->log("CPU Destructor");
 }
 
 /*
@@ -25,14 +28,14 @@ CPU::~CPU() {
 */
 
 void CPU::cycle() {
-    cout << "CPU Cycle" << endl;
+    logger->log("CPU Cycle");
 
     // Fetch the next instruction
     this->fetch();
 }
 
 void CPU::fetch() {
-    cout << "CPU Fetch" << endl;
+    logger->log("CPU Fetch");
 
     // Fetch the next instruction
     char opcode = this->gameboy->memory->fetch8(this->pc);

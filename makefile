@@ -3,7 +3,7 @@ CC = g++
 SOURCES = $(wildcard src/*.cpp src/*/*.cpp src/*/*/*.cpp src/*/*/*/*.cpp)
 OBJS = ${SOURCES:.cpp=.o}
 
-all: build clean run
+all: build run
 
 build: ${OBJS}
 	@${CC} -o ./dist/emulator ${OBJS}
