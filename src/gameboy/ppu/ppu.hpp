@@ -3,13 +3,22 @@
 #include "memory.hpp"
 #include <array>
 #include <cstdint>
-#include <queue>
+
 
 
 constexpr int TILE_SIZE = 8;
 
-constexpr int VRAM_SIZE = 8192;
-constexpr int OAM_SIZE = 160;
+
+
+#define LCDC 0xFF40
+
+#define SCY 0xFF42
+#define SCX 0xFF43
+
+#define BGP 0xFF47
+#define STAT 0xFF41
+
+
 
 
 class PPU {
@@ -48,34 +57,13 @@ private:
     // Frame buffer to store pixel data
     std::array<uint8_t, ScreenWidth * ScreenHeight> framebuffer;
 
-    // Pixel FIFO structures
-    struct Pixel {
-        uint8_t color;
-        uint8_t palette;
-        bool spritePriority;
-        bool backgroundPriority;
-    };
 
-    std::queue<Pixel> backgroundFIFO;
-    std::queue<Pixel> spriteFIFO;
-
-        // Pixel Fetcher state
-        enum class FetcherState {
-            FetchTileNumber,
-            FetchTileDataLow,
-            FetchTileDataHigh,
-            PushToFIFO
-        };
-    
-        FetcherState fetcherState;
-        uint8_t tileNumber;
-        uint8_t tileDataLow;
-        uint8_t tileDataHigh;
-        int fetcherXPos;
 
     
 
     //Internal methods TBD
-
+    void fetchBackgroundTileData(int scanline);
+    void fetchWindowTileData(int scanline);
+    void fetchSpriteData(int scanline);
 };
 
