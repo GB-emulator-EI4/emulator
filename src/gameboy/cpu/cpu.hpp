@@ -18,6 +18,7 @@ class CPU {
         // Gameboy ref
         Gameboy* gameboy;
 
+        // Personnal logger ref
         Log* logger;
 
         // Registers
@@ -29,4 +30,51 @@ class CPU {
         // void decode(); // Decode the instruction
         // void fetchOperands(); // Fetch the operands
         // void execute(); // Execute the instruction
+
+        /*
+        
+            Instructions
+
+        */
+
+        // ADD, ADDC
+        void ADD(uint8_t &r1, const uint8_t &r2);
+        void ADDC(uint8_t &r1, const uint8_t &r2);
+        void ADD(uint16_t &r1, const uint16_t &r2);
+
+        // SUB, SUBC
+        void SUB(uint8_t &r1, const uint8_t &r2);
+        void SUBC(uint8_t &r1, const uint8_t &r2);
+
+        // CP
+        void CP(uint8_t &r1, const uint8_t &r2);
+
+        // INC
+        void INC(uint8_t &r1);
+        void INC(uint16_t &r1);
+
+        // DEC
+        void DEC(uint8_t &r1);
+        void DEC(uint16_t &r1);
+
+        // AND
+        void AND(uint8_t &r1, const uint8_t &r2);
+
+        // OR
+        void OR(uint8_t &r1, const uint8_t &r2);
+
+        // XOR
+        void XOR(uint8_t &r1, const uint8_t &r2);
+
+        // CCF complement carry flag
+        void CCF();
+
+        // SCF set carry flag
+        void SCF();
+
+        // DAA decimal adjust accumulator
+        void DAA();
+
+        // CPL complement accumulator
+        void CPL();
 };
