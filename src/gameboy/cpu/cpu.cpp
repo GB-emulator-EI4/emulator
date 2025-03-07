@@ -1,6 +1,9 @@
 #include <iostream>
+#include <stdint.h>
 
 using namespace std;
+
+#include "../logging/logger/logger.hpp"
 
 #include "cpu.hpp"
 
@@ -11,11 +14,12 @@ using namespace std;
 */
 
 CPU::CPU(Gameboy* gameboy) :  gameboy(gameboy), a(0), f(0), b(0), c(0), d(0), e(0), h(0), l(0), sp(0), pc(0) {
-    cout << "CPU Constructor" << endl;
+    logger = Logger::getInstance()->getLogger("CPU");
+    logger->log("CPU Constructor");
 }
 
 CPU::~CPU() {
-    cout << "CPU Destructor" << endl;
+    logger->log("CPU Destructor");
 }
 
 /*
@@ -25,102 +29,380 @@ CPU::~CPU() {
 */
 
 void CPU::cycle() {
-    cout << "CPU Cycle" << endl;
+    logger->log("CPU Cycle");
 
     // Fetch the next instruction
     this->fetch();
 }
 
 void CPU::fetch() {
-
-    // opcode fetched from memory
-
-    cout << "CPU Fetch" << endl;
+    logger->log("CPU Fetch");
 
     // Fetch the next instruction
     char opcode = this->gameboy->memory->fetch8(this->pc);
 }
 
+/*
 
-void CPU::decodeAndExecute(uint8_t opcode) {
+    ADD, 8 bits, 8 bits carry, 16 bits
 
-    cout << "CPU decode and exec" << endl;
+*/
 
-    // Decode AND EXEC instruction -> switch case to 
-    switch (opcode) {
-        case 0x00 :
-            this->NOP();
-            break;
+void CPU::ADD(uint8_t &r1, const uint8_t &r2) {
+    // Add r2 to r1
+    uint8_t result = r1 + r2;
 
-        case 0x01:
-            break;
-    }
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->resetSubFlag();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 < r2) this->setCarry();
+    else this->resetCarry();
 }
 
+void CPU::ADDC(uint8_t &r1, const uint8_t &r2) {
+    // Add r2 to r1
+    uint8_t result = r1 + r2 + this->getCarry();
 
-void CPU::NOP() { // 0x00
-    cout << "NOP" << endl;
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->resetSubFlag();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 < r2) this->setCarry();
+    else this->resetCarry();
 }
 
+void CPU::ADD(uint16_t &r1, const uint16_t &r2) {
+    // Add r2 to r1
+    uint8_t result = r1 + r2;
 
-void CPU::STOP(uint8_t n8) { // 0x10
-    cout << "STOP n8" << endl;
-    /* TODO
-    enter cpu low power mode 
+    // Set result
+    r1 = result;
 
-    ! must be followed by an additical byte to avoid misinterpretation as second instruction https://man.archlinux.org/man/gbz80.7.en#STOP
-    */
-    // this->pc += 2;
+    // Set flags
+    this->resetSubFlag();
+
+    if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 < r2) this->setCarry();
+    else this->resetCarry();
 }
 
+/*
 
-void  CPU::JRN(int8_t& e8, char& flag) { // 0x20, 0x30 -> jump to pc + e8 if z flag, c flag RESET respectively
-    cout << "JR N_, e8" << endl;
-    /*
-    if !z/!c, add e8 to pc
-    */
-    uint8_t mask = flag=='Z' ? 0x80 : 0x10;
+    SUB 8 bits, 8 bits carry
 
-    // switch (flag) {
-    //     case 'Z':
-    //         mask = 0x80;
-    //         break;
-    //     case 'C':
-    //         mask = 0x10;
-    //         break;
-    // }
-    
-    if (this->f & mask == 0) {
-        this->pc += e8;
+*/
+
+void CPU::SUB(uint8_t &r1, const uint8_t &r2) {
+    // Subtract r2 from r1
+    uint8_t result = r1 - r2;
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->setSubFlag();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnSubtration(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 > r2) this->setCarry();
+    else this->resetCarry();
+}
+
+void CPU::SUBC(uint8_t &r1, const uint8_t &r2) {
+    // Subtract r2 from r1
+    uint8_t result = r1 - r2 - this->getCarry();
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->setSubFlag();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnSubtration(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 > r2) this->setCarry();
+    else this->resetCarry();
+}
+
+/*
+
+    CP 8 bits
+
+*/
+
+void CPU::CP(uint8_t &r1, const uint8_t &r2) {
+    // Compare r1 with r2
+    uint8_t result = r1 - r2;
+
+    // Set flags
+    this->setSubFlag();
+
+    if(result == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnSubtration(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 > r2) this->setCarry();
+    else this->resetCarry();
+}
+
+/*
+
+    INC 8 bits, 16 bits
+
+*/
+
+void CPU::INC(uint8_t &r1) {
+    // Increment r1
+    uint8_t result = r1 + 1;
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->resetSubFlag();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnAddition(r1, 1)) this->setHalfCarry();
+    else this->resetHalfCarry();
+}
+
+void CPU::INC(uint16_t &r1) {
+    // Increment r1
+    uint16_t result = r1 + 1;
+
+    // Set result
+    r1 = result;
+}
+
+/*
+
+    DEC 8 bits, 16 bits
+
+*/
+
+void CPU::DEC(uint8_t &r1) {
+    // Decrement r1
+    uint8_t result = r1 - 1;
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->setSubFlag();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+
+    if(halfCarryOnSubtration(r1, 1)) this->setHalfCarry();
+    else this->resetHalfCarry();
+}
+
+void CPU::DEC(uint16_t &r1) {
+    // Decrement r1
+    uint16_t result = r1 - 1;
+
+    // Set result
+    r1 = result;
+}
+
+/*
+
+    AND bitwise 8 bits
+
+*/
+
+void CPU::AND(uint8_t &r1, const uint8_t &r2) {
+    // And r1 with r2
+    uint8_t result = r1 & r2;
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->resetSubFlag();
+    this->setHalfCarry();
+    this->resetCarry();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+}
+
+/*
+
+    OR bitwise 8 bits
+
+*/
+
+void CPU::OR(uint8_t &r1, const uint8_t &r2) {
+    // Or r1 with r2
+    uint8_t result = r1 | r2;
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->resetSubFlag();
+    this->resetHalfCarry();
+    this->resetCarry();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+}
+
+/*
+
+    XOR bitwise 8 bits
+
+*/
+
+void CPU::XOR(uint8_t &r1, const uint8_t &r2) {
+    // Xor r1 with r2
+    uint8_t result = r1 ^ r2;
+
+    // Set result
+    r1 = result;
+
+    // Set flags
+    this->resetSubFlag();
+    this->resetHalfCarry();
+    this->resetCarry();
+
+    if(r1 == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
+}
+
+/*
+
+    CCF complement carry flag
+
+*/
+
+void CPU::CCF() {
+    // Complement carry flag
+    if(this->getCarry() == 0) this->setCarry();
+    else this->resetCarry();
+
+    // Reset other flags
+    this->resetSubFlag();
+    this->resetHalfCarry();
+}
+
+/*
+
+    SCF set carry flag
+
+*/
+
+void CPU::SCF() {
+    // Set carry flag
+    this->setCarry();
+
+    // Reset other flags
+    this->resetSubFlag();
+    this->resetHalfCarry();
+}
+
+/*
+
+    DAA decimal adjust accumulator, see: https://rgbds.gbdev.io/docs/v0.9.1/gbz80.7#DAA
+
+*/
+
+void CPU::DAA() {
+    uint8_t adjustment = 0;
+
+    if(this->getSubFlag()) {
+        if(this->getHalfCarry()) adjustment += 0x06;
+        if(this->getCarry()) adjustment += 0x60;
+
+        this->resetCarry();
+
+        this->a -= adjustment;
     } else {
-        this->pc += 2;
+        if(this->getHalfCarry() || (this->a & 0x0F) > 9) adjustment += 0x06;
+        if(this->getCarry() || this->a > 0x99) adjustment += 0x60;
+
+        this->setCarry();
+
+        this->a += adjustment;
     }
-    
+
+    // Set flags
+    this->resetHalfCarry();
+
+    if(this->a == 0) this->setZeroFlag();
+    else this->resetZeroFlag();
 }
 
-void CPU::JR(int8_t& e8, char& flag) { // 0x18, 0x28 -> jump to pc + e8 if z flag, c flag SET respectively
-    cout << "JR _, e8" << endl;
-    uint8_t mask = flag=='Z' ? 0x80 : 0x10;
-    // switch (flag) {
-    //     case "Z":
-    //         mask = 0x80;
-    //         break;
-    //     case "C":
-    //         mask = 0x10;
-    //         break;
+/*
 
-    if (this->f & mask) {
-        this->pc += e8;
-    } else {
-        this->pc += 2;
-    }
+    CPL complement accumulator
+
+*/
+
+void CPU::CPL() {
+    // Complement accumulator
+    this->a = ~this->a;
+
+    // Set flags
+    this->setSubFlag();
+    this->setHalfCarry();
 }
 
+/*
 
-void CPU::LD(uint8_t& reg1, uint8_t& reg2, uint16_t& n16) { // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
-    cout << "LD reg1, reg2 n16" << endl;
-    reg1 = n16 >> 8; // this->b, this->d, etc
-    reg2 = n16 & 0xFF; // this->c, this->e, etc
-    this->pc += 3;
+    Utils for addition and subtraction
+    // TODO may be a good idea to move to a separate file
+
+*/
+
+static constexpr bool halfCarryOnAddition(uint8_t first_num, uint8_t second_num)
+{
+    return (((first_num & 0x0F) + (second_num & 0x0F)) & 0x10) == 0x10;
 }
 
+static constexpr bool halfCarryOnAddition(uint16_t first_num, uint16_t second_num)
+{
+    return (((first_num & 0x00FF) + (second_num & 0x00FF)) & 0x0100) == 0x0100;
+}
+
+static constexpr bool halfCarryOnSubtration(uint8_t first_num, uint8_t second_num)
+{
+    return (int)(first_num & 0x0F) - (int)(second_num & 0x0F) < 0;
+}
+
+static constexpr bool halfCarryOnSubtration(uint16_t first_num, uint16_t second_num)
+{
+    return (int)(first_num & 0x00FF) - (int)(second_num & 0x00FF) < 0;
+}
