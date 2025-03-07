@@ -115,6 +115,83 @@ void CPU::LD(uint8_t& r1, uint8_t& r2, uint8_t& r3, uint8_t& r4) { // 0x01, 0x11
 
 /*
 
+    get/set/reset carry (bit 4 of f reg)
+
+*/
+
+bool CPU::getCarry() {
+    // return (this->f & (1<<4))...
+    return (this->f & 0x10) == 0x10;
+}
+
+void CPU::setCarry() {
+    this->f |= 0x10;
+}
+
+void CPU::resetCarry() {
+    this->f &= 0xEF;
+}
+
+/*
+
+    get/set/reset half carry (bit 5 of f reg)
+
+*/
+
+bool CPU::getHalfCarry() {
+    // return (this->f & (1<<5)) != 0;
+    return (this->f & 0x20) == 0x20;
+}
+
+void CPU::setHalfCarry() {
+    this->f |= 0x20;
+}
+
+void CPU::resetHalfCarry() {
+    this->f &= 0xDF;
+}
+
+/*
+
+    get/set/reset sub (bit 6 of f reg)
+
+*/
+
+bool CPU::getSub() {
+    // return (this->f & (1<<6))...
+    return (this->f & 0x40) == 0x40;
+}
+
+void CPU::setSub() {
+    this->f |= 0x40;
+}
+
+void CPU::resetSub() {
+    this->f &= 0xBF;
+}
+
+
+/*
+
+    get/set/reset zero (bit 7 of f reg)
+
+*/
+
+bool CPU::getZero() {
+    // return (this->f & (1<<7))...
+    return (this->f & 0x80) == 0x80;
+}
+
+void CPU::setZero() {
+    this->f |= 0x80;
+}
+
+void CPU::resetZero() {
+    this->f &= 0x7F;
+}
+
+/*
+
     ADD, 8 bits, 8 bits carry, 16 bits
 
 */
@@ -127,10 +204,10 @@ void CPU::ADD(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -147,10 +224,10 @@ void CPU::ADDC(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -168,7 +245,7 @@ void CPU::ADD(uint8_t &r1, uint8_t &r2, const uint8_t &r3, const uint8_t &r4) {
     r2 = result & 0xFF;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
 
     if(halfCarryOnAddition(result, (uint16_t) ((r3 << 8) + r4))) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -191,10 +268,10 @@ void CPU::SUB(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->setSubFlag();
+    this->setSub();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnSubtration(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -211,10 +288,10 @@ void CPU::SUBC(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->setSubFlag();
+    this->setSub();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnSubtration(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -234,10 +311,10 @@ void CPU::CP(uint8_t &r1, const uint8_t &r2) {
     uint8_t result = r1 - r2;
 
     // Set flags
-    this->setSubFlag();
+    this->setSub();
 
-    if(result == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(result == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnSubtration(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -260,10 +337,10 @@ void CPU::INC(uint8_t &r1) {
     r1 = result;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnAddition(r1, 1)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -291,10 +368,10 @@ void CPU::DEC(uint8_t &r1) {
     r1 = result;
 
     // Set flags
-    this->setSubFlag();
+    this->setSub();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 
     if(halfCarryOnSubtration(r1, 1)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -322,12 +399,12 @@ void CPU::AND(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
     this->setHalfCarry();
     this->resetCarry();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 }
 
 /*
@@ -344,12 +421,12 @@ void CPU::OR(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
     this->resetHalfCarry();
     this->resetCarry();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 }
 
 /*
@@ -366,12 +443,12 @@ void CPU::XOR(uint8_t &r1, const uint8_t &r2) {
     r1 = result;
 
     // Set flags
-    this->resetSubFlag();
+    this->resetSub();
     this->resetHalfCarry();
     this->resetCarry();
 
-    if(r1 == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(r1 == 0) this->setZero();
+    else this->resetZero();
 }
 
 /*
@@ -386,7 +463,7 @@ void CPU::CCF() {
     else this->resetCarry();
 
     // Reset other flags
-    this->resetSubFlag();
+    this->resetSub();
     this->resetHalfCarry();
 }
 
@@ -401,7 +478,7 @@ void CPU::SCF() {
     this->setCarry();
 
     // Reset other flags
-    this->resetSubFlag();
+    this->resetSub();
     this->resetHalfCarry();
 }
 
@@ -414,7 +491,7 @@ void CPU::SCF() {
 void CPU::DAA() {
     uint8_t adjustment = 0;
 
-    if(this->getSubFlag()) {
+    if(this->getSub()) {
         if(this->getHalfCarry()) adjustment += 0x06;
         if(this->getCarry()) adjustment += 0x60;
 
@@ -433,8 +510,8 @@ void CPU::DAA() {
     // Set flags
     this->resetHalfCarry();
 
-    if(this->a == 0) this->setZeroFlag();
-    else this->resetZeroFlag();
+    if(this->a == 0) this->setZero();
+    else this->resetZero();
 }
 
 /*
@@ -448,7 +525,7 @@ void CPU::CPL() {
     this->a = ~this->a;
 
     // Set flags
-    this->setSubFlag();
+    this->setSub();
     this->setHalfCarry();
 }
 
