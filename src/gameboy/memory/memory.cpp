@@ -4,8 +4,6 @@
 
 using namespace std;
 
-#include "../logging/logger/logger.hpp"
-
 #include "memory.hpp"
 
 /*
@@ -15,12 +13,11 @@ using namespace std;
 */
 
 Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), hram() {
-    logger = Logger::getInstance()->getLogger("Memory");
-    logger->log("Memory Constructor");
+    cout << "Memory Constructor" << endl;
 }
 
 Memory::~Memory() {
-    logger->log("Memory Destructor");
+    cout << "Memory Destructor" << endl;
 }
 
 /*
@@ -29,28 +26,24 @@ Memory::~Memory() {
 
 */
 
-void Memory::loadRom(const int &startAdress, const string &romPath, const int &size) {
-    logger->log("Loading ROM at address " + to_string(startAdress) + " with size " + to_string(size));
-
-    // Open ROM file
-    ifstream romFile(romPath, ios::binary);
+void Memory::loadBootrom(const string &bootromPath) {
+    // Open boot ROM file
+    ifstream bootromFile(bootromPath, ios::binary);
 
     // Check if the file was opened successfully
-    if(!romFile.is_open()) {
-        logger->error("Error: Could not open ROM file : " + romPath); 
+    if (!bootromFile.is_open()) {
+        cout << "Error: Could not open boot ROM file" << endl;
         exit(1);
     }
 
-    // Read ROM file
-    romFile.read(this->romFixed, size);
+    // Read boot ROM file
+    bootromFile.read(this->bootrom, BOOTROM_SIZE);
 
-    // Close ROM file
-    romFile.close();
-
-    logger->log("ROM loaded successfully");
+    // Close boot ROM file
+    bootromFile.close();
 }
 
-char& Memory::fetch8(int &address) {
+char& Memory::fetch8(const int& address) {
     // Check if the address is in the boot ROM
     if (address >= BOOTROM_OFFSET && address < ROM_FIXED_OFFSET) return this->bootrom[address];
 
@@ -79,6 +72,6 @@ char& Memory::fetch8(int &address) {
     if (address >= HRAM_OFFSET) return this->hram[address - HRAM_OFFSET];
 
     // If the address is not in any of the memory blocks, throw an error
-    logger->error("Error: Invalid memory address, reading at address " + to_string(address));
+    cout << "Error: Invalid memory address, reading at address " << address << endl;
     exit(1);
 }

@@ -4,8 +4,6 @@
 
 using namespace std;
 
-#include "../logging/log/log.hpp"
-
 // Memory block sizes
 #define BOOTROM_SIZE 256
 
@@ -24,7 +22,7 @@ using namespace std;
 #define HRAM_SIZE 128
 
 // Memory block offsets
-#define BOOTROM_OFFSET 0x0000 // 0x0000 - 0x00FF, boot ROM overlapps with the first 256 bytes of the fixed ROM
+#define BOOTROM_OFFSET 0x0000 // 0x0000 - 0x00FF, boot ROM overlaps with the first 256 bytes of the fixed ROM
 
 #define ROM_FIXED_OFFSET 0x0000 // First 256 bytes are ignored
 #define ROM_BANKED_OFFSET 0x4000
@@ -46,15 +44,13 @@ class Memory {
         ~Memory();
 
         // Memory read functions
-        char& fetch8(int &address); // Fetch 8-bit value from memory
+        char& fetch8(const int &address); // Fetch 8-bit value from memory
         // int& fetch16(int &address); // Fetch 16-bit value from memory
 
         // ROM load functions
-        void loadRom(const int &startAdress, const string &bootromPath, const int &size); // Load the boot ROM
+        void loadBootrom(const string &bootromPath); // Load the boot ROM
 
     private:
-        Log* logger;
-
         char bootrom[BOOTROM_SIZE]; // 256B
 
         char romFixed[ROM_FIXED_SIZE]; // 16KB
