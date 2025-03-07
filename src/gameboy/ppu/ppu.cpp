@@ -151,6 +151,45 @@ void PPU::fetchWindowTileData(int scanline) {
 }
 
 void PPU::fetchSpriteData(int scanline) {
-    // Fetch and render sprite data for the given scanline
-    // Implementation details go here
+    uint8_t lcdc = memory.fetch8(LCDC); // LCDC register
+    // check the bit 2 of lcdc to know sprite size
+    bool spriteSize = lcdc & 0x04; // Sprite size (8x8 or 8x16)
+
+    //Sprite data is stored in the OAM section of memory which can fit up to 40 sprites.
+    for (int i = 0; i < 40; i++) {
+        uint8_t yPos = memory.fetch8(OAM_OFFSET + i * 4) - 16;
+        uint8_t xPos = memory.fetch8(OAM_OFFSET + i * 4 + 1) - 8;
+        
+        uint8_t tileIndex = memory.fetch8(OAM_OFFSET + i * 4 + 2);
+        uint8_t attributes = memory.fetch8(OAM_OFFSET + i * 4 + 3);
+
+        if (scanline >= yPos && scanline < (yPos + (spriteSize ? 16 : 8))) {
+            int tileY = scanline - yPos;
+            if (attributes & 0x40) { // Vertical flip
+                tileY = (spriteSize ? 15 : 7) - tileY;
+            }
+
+            uint16_t tileDataAddress = 0x8000 + (tileIndex * 16) + (tileY * 2);
+            uint8_t lowByte = memory.fetch8(tileDataAddress);
+            uint8_t highByte = memory.fetch8(tileDataAddress + 1);
+
+            for (int x = 0; x < 8; x++) {
+                int bit = 7 - x;
+                if (attributes & 0x20) { // Horizontal flip
+                    bit = x;
+                }
+
+                uint8_t colorIndex = ((highByte >> bit) & 1) << 1 | ((lowByte >> bit) & 1);
+                if (colorIndex == 0) continue; // Transparent
+
+                uint8_t color = (attributes & 0x10) ? memory.fetch8(OBP1) : memory.fetch8(OBP0);
+                color = (color >> (colorIndex * 2)) & 0x03;
+
+                int pixelX = xPos + x;
+                if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
+                    framebuffer[(scanline * SCREEN_WIDTH) + pixelX] = color;
+                }
+            }
+        }
+    }
 }
