@@ -196,8 +196,6 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
         */
 
         case 0xEB: { // DUMPR
-            logger->log("Dumping registers");
-
             this->DUMPR();
 
             // Increment PC
@@ -206,8 +204,6 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
         } break;
 
         case 0xEC: { // DUMPW
-            logger->log("Dumping work RAM");
-
             this->DUMPW();
 
             // Increment PC
@@ -216,8 +212,6 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
         } break;
 
         case 0xED: { // DUMPV
-            logger->log("Dumping video RAM");
-
             this->DUMPV();
 
             // Increment PC

@@ -10,7 +10,10 @@ using namespace std;
 int main() {
     // Init logger
     Logger* masterLogger = Logger::getInstance();
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR}, {"Main", "Gameboy", "CPU", "Memory", "PPU"});
+
+    // Available levels: LOG_LOG, LOG_ERROR
+    // Available domains: Main, Gameboy, CPU, Memory, PPU
+    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR}, {"Gameboy", "CPU", "Memory", "PPU"}, {"Constructor", "Destructor", "Fetch", "Decode"});
 
     Log* logger = masterLogger->getLogger("Main");
 

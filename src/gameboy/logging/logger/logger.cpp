@@ -53,13 +53,19 @@ void Logger::log(const char &level, const string &domain, const string &message)
     // Check if domain is enabled
     if(find(enabledDomains.begin(), enabledDomains.end(), domain) == enabledDomains.end()) return;
 
+    // Check if message contains any word from the word filter
+    for(const auto &word : wordFilter) {
+        if(message.find(word) != string::npos) return;
+    }
+
     // Log, if domain is error then print in red
     if(level == LOG_ERROR) cout << "\033[1;31mError: " << domain << ": " << message << "\033[0m" << endl;
     else cout << "[" + domain + "] " << message << endl;
 }
 
-void Logger::setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains) {
+void Logger::setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter) {
     this->enableLogging = enableLogging;
     this->enabledLevels = enabledLevels;
     this->enabledDomains = enabledDomains;
+    this->wordFilter = wordFilter;
 }
