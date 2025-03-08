@@ -35,6 +35,24 @@ class CPU {
 
         */
 
+        // GETTERS
+        bool getCarry();
+        bool getHalfCarry();
+        bool getSub();
+        bool getZero(); 
+
+        // SETTERS
+        void setCarry();
+        void setHalfCarry();
+        void setSub();
+        void setZero();
+
+        // RESETTERS
+        void resetCarry();
+        void resetHalfCarry();
+        void resetSub();
+        void resetZero();
+
         // NOP
         void NOP(); // 0x00
 
@@ -42,16 +60,16 @@ class CPU {
         void STOP(uint8_t n8); // 0x10
 
         // JUMP
-        void JRN(int8_t& e8, char& flag); // 0x20, 0x30
-        void JR(int8_t& e8, char& flag); // 0x18, 0x28
+        bool JRN(int8_t& e8, char& flag); // 0x20, 0x30
+        bool JR(int8_t& e8, char& flag); // 0x18, 0x28
 
-        // LD
+        // LD 
         void CPU::LD(uint8_t& r1, uint8_t& r2, uint8_t& r3, uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
 
         // ADD, ADDC
         void ADD(uint8_t &r1, const uint8_t &r2);
         void ADDC(uint8_t &r1, const uint8_t &r2);
-        void ADD(uint16_t &r1, const uint16_t &r2);
+        void ADD(uint8_t &r1, uint8_t &r2, const uint8_t &r3, const uint8_t &r4);
 
         // SUB, SUBC
         void SUB(uint8_t &r1, const uint8_t &r2);
