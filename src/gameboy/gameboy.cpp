@@ -28,7 +28,7 @@ Gameboy* Gameboy::instance = nullptr;
 
 */
 
-Gameboy::Gameboy() : running(true), cpu(new CPU(this)), memory(new Memory()) {
+Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), running(true) {
     logger = Logger::getInstance()->getLogger("Gameboy");
     logger->log("Gameboy Constructor");
 }
@@ -36,6 +36,7 @@ Gameboy::Gameboy() : running(true), cpu(new CPU(this)), memory(new Memory()) {
 Gameboy::~Gameboy() {
     delete cpu;
     delete memory;
+    delete logger;
 
     instance = nullptr;
 
@@ -63,4 +64,10 @@ void Gameboy::run() {
     while(this->running) {
         this->cpu->cycle();
     }
+}
+
+void Gameboy::stop() {
+    this->running = false;
+
+    logger->log("Gameboy stopping");
 }

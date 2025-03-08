@@ -1,8 +1,10 @@
 #include <iostream>
 #include <stdint.h>
+#include <string>
 
 using namespace std;
 
+#include "../utils/utils.hpp"
 #include "../logging/logger/logger.hpp"
 
 #include "cpu.hpp"
@@ -29,88 +31,124 @@ CPU::~CPU() {
 */
 
 void CPU::cycle() {
-    logger->log("CPU Cycle");
+    logger->log("CPU Cycle, PC: " + intToHex(this->pc));
 
     // Fetch the next instruction
-    this->fetch();
+    uint8_t opcode = this->fetch();
+
+    // Decode and execute the instruction
+    this->decodeAndExecute(opcode);
 }
 
-void CPU::fetch() {
+uint8_t CPU::fetch() {
     logger->log("CPU Fetch");
 
     // Fetch the next instruction
-    char opcode = this->gameboy->memory->fetch8(this->pc);
+    uint8_t opcode = this->gameboy->memory->fetch8(this->pc);
+
+    logger->log("Fetched opcode: " + intToHex(opcode));
+
+    return opcode;
 }
 
-void CPU::decodeAndExecute(uint8_t opcode) {
+void CPU::decodeAndExecute(const uint8_t opcode) {
     logger->log("CPU Decode and Execute");
 
     switch (opcode) {
-        case 0x00 :
-            this->NOP();
-            break;
+        case 0x00: {
+            // Log
+            logger->log("NOP");
 
-        case 0x01:
-            break;
+            // Increment PC
+            this->pc++;
+        } break;
 
-        case 0x80: // ADD A, B
+        case 0x10: { // STOP n8
+            // Log
+            logger->log("STOP");
+
+            this->gameboy->stop();
+        } break;
+
+        case 0x80: { // ADD A, B
+            // Log
+            logger->log("ADD A, B");
+
             // Execute
             this->ADD(this->a, this->b);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
 
-        case 0x81: // ADD A, C
+        case 0x81: { // ADD A, C
+            // Log
+            logger->log("ADD A, C");
+
             // Execute
             this->ADD(this->a, this->c);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
 
-        case 0x82: // ADD A, D
+        case 0x82: { // ADD A, D
+            // Log
+            logger->log("ADD A, D");
+
             // Execute
             this->ADD(this->a, this->d);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
 
-        case 0x83: // ADD A, E
+        case 0x83: { // ADD A, E
+            // Log
+            logger->log("ADD A, E");
+
             // Execute
             this->ADD(this->a, this->e);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
 
-        case 0x84: // ADD A, H
+        case 0x84: { // ADD A, H
+            // Log
+            logger->log("ADD A, H");
+
             // Execute
             this->ADD(this->a, this->h);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
         
-        case 0x85: // ADD A, L
+        case 0x85: { // ADD A, L
+            // Log
+            logger->log("ADD A, L");
+
             // Execute
             this->ADD(this->a, this->l);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
 
-        case 0x86: // ADD A, (HL)
+        case 0x86: { // ADD A, (HL)
             // Fetch operand
             uint16_t adress = (this->h << 8) + this->l;
             uint8_t value = this->gameboy->memory->fetch8(adress);
+
+            // Log
+            logger->log("ADD A, (HL) at adress " + intToHex(adress) + " with value " + intToHex(value));
 
             // Execute
             this->ADD(this->a, value);
@@ -122,43 +160,77 @@ void CPU::decodeAndExecute(uint8_t opcode) {
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
 
-        case 0x87: // ADD A, A
+        case 0x87: { // ADD A, A
+            // Log
+            logger->log("ADD A, A");
+
             // Execute
             this->ADD(this->a, this->a);
 
             // Increment PC
             this->pc++;
 
-            break;
+        } break;
+
+        case 0xC6: { // ADD A, n8
+            // Fetch operand
+            uint8_t value = this->gameboy->memory->fetch8(this->pc + 1);
+
+            // Log
+            logger->log("ADD A, n8 with value " + intToHex(value));
+
+            // Execute
+            this->ADD(this->a, value);
+
+            // Increment PC
+            this->pc += 2;
+
+        } break;
+
+        /*
+        
+            Customs instructions
+        
+        */
+
+        case 0xEB: { // DUMPR
+            logger->log("Dumping registers");
+
+            this->DUMPR();
+
+            // Increment PC
+            this->pc++;
+
+        } break;
+
+        case 0xEC: { // DUMPW
+            logger->log("Dumping work RAM");
+
+            this->DUMPW();
+
+            // Increment PC
+            this->pc++;
+
+        } break;
+
+        case 0xED: { // DUMPV
+            logger->log("Dumping video RAM");
+
+            this->DUMPV();
+
+            // Increment PC
+            this->pc++;
+
+        } break;
+
+        default: {
+            logger->error("Unknown opcode: " + intToHex(opcode));
+
+            this->gameboy->stop();
+        } break;
     }
-}
-
-/*
-
-    NOP
-
-*/
-
-void CPU::NOP() { // 0x00
-    cout << "NOP" << endl;
-}
-
-/*
-
-    STOP
-
-*/
-
-void CPU::STOP(uint8_t n8) { // 0x10
-    cout << "STOP n8" << endl;
-
-    /* TODO
-        enter cpu low power mode 
-
-        ! must be followed by an additical byte to avoid misinterpretation as second instruction https://man.archlinux.org/man/gbz80.7.en#STOP
-    */
 }
 
 /*
@@ -170,7 +242,7 @@ void CPU::STOP(uint8_t n8) { // 0x10
 bool  CPU::JRN(int8_t& e8, char& flag) { // 0x20, 0x30 -> jump to pc + e8 if z flag, c flag RESET respectively
     uint8_t mask = flag=='Z' ? 0x80 : 0x10; // TODO flag is gathred with getXFlag() function
     
-    if (this->f & mask == 0) {
+    if((this->f & mask) == 0) {
         this->pc += e8;
         return false;
     } else return true;    
@@ -179,7 +251,7 @@ bool  CPU::JRN(int8_t& e8, char& flag) { // 0x20, 0x30 -> jump to pc + e8 if z f
 bool CPU::JR(int8_t& e8, char& flag) { // 0x18, 0x28 -> jump to pc + e8 if z flag, c flag SET respectively
     uint8_t mask = flag=='Z' ? 0x80 : 0x10; // TODO flag is gathred with getXFlag() function
 
-    if (this->f & mask) {
+    if(this->f & mask) {
         this->pc += e8;
         return false;
     } else return true;
@@ -609,27 +681,42 @@ void CPU::CPL() {
 
 /*
 
-    Utils for addition and subtraction
-    // TODO may be a good idea to move to a separate file
+    DUMP
 
 */
 
-static constexpr bool halfCarryOnAddition(uint8_t first_num, uint8_t second_num)
-{
-    return (((first_num & 0x0F) + (second_num & 0x0F)) & 0x10) == 0x10;
+void CPU::DUMPR() {
+    // Dump registers
+    logger->log("Dumping registers");
+
+    logger->log("A: " + intToHex(this->a));
+    logger->log("F: " + intToHex(this->f));
+    logger->log("B: " + intToHex(this->b));
+    logger->log("C: " + intToHex(this->c));
+    logger->log("D: " + intToHex(this->d));
+    logger->log("E: " + intToHex(this->e));
+    logger->log("H: " + intToHex(this->h));
+    logger->log("L: " + intToHex(this->l));
+    logger->log("SP: " + intToHex(this->sp));
+    logger->log("PC: " + intToHex(this->pc));
 }
 
-static constexpr bool halfCarryOnAddition(uint16_t first_num, uint16_t second_num)
-{
-    return (((first_num & 0x00FF) + (second_num & 0x00FF)) & 0x0100) == 0x0100;
+void CPU::DUMPW() {
+    // Dump work RAM
+    logger->log("Dumping work RAM");
+
+    for(uint16_t i = 0xC000; i < 0xE000; i++) {
+        uint8_t val = this->gameboy->memory->fetch8(i);
+        logger->log(intToHex(i) + ": " + intToHex(val));
+    }
 }
 
-static constexpr bool halfCarryOnSubtration(uint8_t first_num, uint8_t second_num)
-{
-    return (int)(first_num & 0x0F) - (int)(second_num & 0x0F) < 0;
-}
+void CPU::DUMPV() {
+    // Dump video RAM
+    logger->log("Dumping video RAM");
 
-static constexpr bool halfCarryOnSubtration(uint16_t first_num, uint16_t second_num)
-{
-    return (int)(first_num & 0x00FF) - (int)(second_num & 0x00FF) < 0;
+    for(uint16_t i = 0x8000; i < 0xA000; i++) {
+        uint8_t val = this->gameboy->memory->fetch8(i);
+        logger->log(intToHex(i) + ": " + intToHex(val));
+    }
 }

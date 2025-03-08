@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <stdint.h>
 
 using namespace std;
 
@@ -30,8 +31,10 @@ class Gameboy {
 
         // Functions
         void run();
+        void stop();
 
     private:
+        // Singleton instance
         static Gameboy* instance;
 
         // Constructors
@@ -40,5 +43,5 @@ class Gameboy {
         Log* logger;
     
         // Vars
-        bool running = true;
+        bool running;
 };

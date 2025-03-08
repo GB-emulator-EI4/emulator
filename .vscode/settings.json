@@ -44,11 +44,19 @@
         "numbers": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "charconv": "cpp",
+        "ctime": "cpp",
+        "format": "cpp",
+        "span": "cpp",
+        "variant": "cpp",
+        "filesystem": "cpp",
+        "iomanip": "cpp"
     },
 
     "files.exclude": {
         "**/*.o": true,
         "dist": true,
-    }
+    },
+    "cortex-debug.variableUseNaturalFormat": false
 }

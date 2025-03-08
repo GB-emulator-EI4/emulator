@@ -23,7 +23,11 @@ int main() {
 
     // Load game ROM
     logger->log("Loading game ROM");
-    gameboy->setGameRom(GAME_ROM_PATH);
+    gameboy->setGameRom(ROM_PATH);
+
+    // Run the emulator
+    logger->log("Running emulator");
+    gameboy->run();
 
     // Free everything
     delete gameboy;

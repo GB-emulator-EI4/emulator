@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "../logging/log/log.hpp"
 
 #include "../gameboy.hpp"
@@ -26,8 +28,8 @@ class CPU {
         uint16_t sp, pc; // 16-bit registers
 
         // Execution steps
-        void fetch(); // Fetch the next instruction
-        void decodeAndExecute(uint8_t opcode);
+        uint8_t fetch(); // Fetch the next instruction
+        void decodeAndExecute(const uint8_t opcode);
 
         /*
         
@@ -35,36 +37,12 @@ class CPU {
 
         */
 
-        // GETTERS
-        bool getCarry();
-        bool getHalfCarry();
-        bool getSub();
-        bool getZero(); 
-
-        // SETTERS
-        void setCarry();
-        void setHalfCarry();
-        void setSub();
-        void setZero();
-
-        // RESETTERS
-        void resetCarry();
-        void resetHalfCarry();
-        void resetSub();
-        void resetZero();
-
-        // NOP
-        void NOP(); // 0x00
-
-        // STOP
-        void STOP(uint8_t n8); // 0x10
-
         // JUMP
         bool JRN(int8_t& e8, char& flag); // 0x20, 0x30
         bool JR(int8_t& e8, char& flag); // 0x18, 0x28
 
         // LD 
-        void CPU::LD(uint8_t& r1, uint8_t& r2, uint8_t& r3, uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
+        void LD(uint8_t& r1, uint8_t& r2, uint8_t& r3, uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
 
         // ADD, ADDC
         void ADD(uint8_t &r1, const uint8_t &r2);
@@ -106,4 +84,37 @@ class CPU {
 
         // CPL complement accumulator
         void CPL();
+
+        /*
+        
+            Custom instructions, used for homemade test ROMS
+            It uses empty instructions slots
+        
+        */
+
+        // DUMP
+        void DUMPR(); // Registers
+        void DUMPW(); // WRAM, Banked WRAM, HRAM
+        void DUMPV(); // VRAM, OAM
+
+        /*
+
+            Flags getters and setters
+        
+        */
+
+        bool getCarry(); // TODO flags functions should be declared as inline
+        bool getHalfCarry();
+        bool getSub();
+        bool getZero(); 
+
+        void setCarry();
+        void setHalfCarry();
+        void setSub();
+        void setZero();
+
+        void resetCarry();
+        void resetHalfCarry();
+        void resetSub();
+        void resetZero();
 };
