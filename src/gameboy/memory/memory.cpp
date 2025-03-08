@@ -50,7 +50,7 @@ void Memory::loadRom(const int &startAdress, const string &romPath, const int &s
     logger->log("ROM loaded successfully");
 }
 
-char& Memory::fetch8(int &address) {
+char& Memory::fetch8(uint16_t &address) {
     // Check if the address is in the boot ROM
     if (address >= BOOTROM_OFFSET && address < ROM_FIXED_OFFSET) return this->bootrom[address];
 

@@ -43,16 +43,94 @@ void CPU::fetch() {
 }
 
 void CPU::decodeAndExecute(uint8_t opcode) {
+    logger->log("CPU Decode and Execute");
 
-    cout << "CPU decode and exec" << endl;
-
-    // Decode AND EXEC instruction -> switch case to 
     switch (opcode) {
         case 0x00 :
             this->NOP();
             break;
 
         case 0x01:
+            break;
+
+        case 0x80: // ADD A, B
+            // Execute
+            this->ADD(this->a, this->b);
+
+            // Increment PC
+            this->pc++;
+
+            break;
+
+        case 0x81: // ADD A, C
+            // Execute
+            this->ADD(this->a, this->c);
+
+            // Increment PC
+            this->pc++;
+
+            break;
+
+        case 0x82: // ADD A, D
+            // Execute
+            this->ADD(this->a, this->d);
+
+            // Increment PC
+            this->pc++;
+
+            break;
+
+        case 0x83: // ADD A, E
+            // Execute
+            this->ADD(this->a, this->e);
+
+            // Increment PC
+            this->pc++;
+
+            break;
+
+        case 0x84: // ADD A, H
+            // Execute
+            this->ADD(this->a, this->h);
+
+            // Increment PC
+            this->pc++;
+
+            break;
+        
+        case 0x85: // ADD A, L
+            // Execute
+            this->ADD(this->a, this->l);
+
+            // Increment PC
+            this->pc++;
+
+            break;
+
+        case 0x86: // ADD A, (HL)
+            // Fetch operand
+            uint16_t adress = (this->h << 8) + this->l;
+            uint8_t value = this->gameboy->memory->fetch8(adress);
+
+            // Execute
+            this->ADD(this->a, value);
+
+            // Read and print memory adress again, throw error if value did not change // TODO remove after proper testing
+            uint8_t value2 = this->gameboy->memory->fetch8(adress);
+            if(value == value2) logger->error("Memory adress did not change after ADD A, (HL)");
+
+            // Increment PC
+            this->pc++;
+
+            break;
+
+        case 0x87: // ADD A, A
+            // Execute
+            this->ADD(this->a, this->a);
+
+            // Increment PC
+            this->pc++;
+
             break;
     }
 }

@@ -22,8 +22,8 @@ class CPU {
         Log* logger;
 
         // Registers
-        char a, f, b, c, d, e, h, l; // 8-bit registers
-        int sp, pc; // 16-bit registers
+        uint8_t a, f, b, c, d, e, h, l; // 8-bit registers
+        uint16_t sp, pc; // 16-bit registers
 
         // Execution steps
         void fetch(); // Fetch the next instruction
