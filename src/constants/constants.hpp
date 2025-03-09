@@ -25,4 +25,8 @@
 
 */
 
-#define ROM_PATH "roms/tests/homemade/ADD(A-B).bin"
+// #define ROM_PATH "roms/tests/homemade/ADD/ADD r r.bin"
+
+// #define ROM_PATH "roms/tests/homemade/LD/LD r n8.bin"
+// #define ROM_PATH "roms/tests/homemade/LD/LD r [].bin"
+#define ROM_PATH "roms/tests/homemade/LD/LD [] r.bin"

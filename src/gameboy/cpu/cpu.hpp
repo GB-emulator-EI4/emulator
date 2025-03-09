@@ -31,6 +31,9 @@ class CPU {
         uint8_t fetch(); // Fetch the next instruction
         void decodeAndExecute(const uint8_t opcode);
 
+        // Operand fetchers
+        const uint8_t& getArith8Operand(const uint8_t opcode);
+
         /*
         
             Instructions
@@ -41,7 +44,8 @@ class CPU {
         bool JRN(int8_t& e8, char& flag); // 0x20, 0x30
         bool JR(int8_t& e8, char& flag); // 0x18, 0x28
 
-        // LD 
+        // LD
+        void LD(uint8_t& r1, const uint8_t& r2);
         void LD(uint8_t& r1, uint8_t& r2, uint8_t& r3, uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
 
         // ADD, ADDC

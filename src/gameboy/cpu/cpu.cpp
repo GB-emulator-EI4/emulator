@@ -54,13 +54,273 @@ uint8_t CPU::fetch() {
 void CPU::decodeAndExecute(const uint8_t opcode) {
     logger->log("CPU Decode and Execute");
 
-    switch (opcode) {
+    uint8_t high = opcode >> 4;
+    uint8_t low = opcode & 0xF;
+
+    /*
+    
+        Switch case for LD on: r r, r [HL], [HL] r (lines 0x40 to 0x7F)
+    
+    */
+
+    switch(high) {
+        case 0x4: {
+            // Fetch operands
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("LD B r or LD C r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // LD B r
+            if(low <= 0x7) return this->LD(this->b, r2);
+
+            // LD C r
+            else return this->LD(this->c, r2);
+        } break;
+
+        case 0x5: {
+            // Fetch operands
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("LD D r or LD E r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // LD D r
+            if(low <= 0x7) return this->LD(this->d, r2);
+
+            // LD E r
+            else return this->LD(this->e, r2);
+        } break;
+
+        case 0x6: {
+            // Fetch operands
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("LD H r or LD L r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // LD H r
+            if(low <= 0x7) return this->LD(this->h, r2);
+
+            // LD L r
+            else  return this->LD(this->l, r2);
+        } break;
+
+        case 0x7: {
+            // Fetch operands
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("LD [HL] r or LD A r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // LD [HL] r
+            if(low <= 0x7) {
+                uint16_t adress = (this->h << 8) + this->l;
+                return this->LD((uint8_t&) this->gameboy->memory->fetch8(adress), r2);
+            }
+
+            // LD A r
+            else return this->LD(this->a, r2);
+        } break;
+    }
+
+    /*
+    
+        Other LD instructions, LD n8, r (0x02, 0x12, 0x22, 0x32, 0x06, 0x16, 0x26, 0x36, 0x0A, 0x1A, 0x2A, 0x3A, 0x0E, 0x1E, 0x2E, 0x3E)
+    
+    */
+
+    switch(low) {
+        case 0x2: {
+            // Log
+            logger->log("LD [adr], A");
+
+            // Increment PC
+            this->pc++;
+
+            // Fetch memory address reference
+            uint8_t address;
+            if(high == 0x0) address = (this->b << 8) + this->c; // BC
+            else if(high == 0x1) address = (this->d << 8) + this->e; // DE
+            else if(high == 0x2) { // HL+
+                address = (this->h << 8) + this->l;
+
+                this->h = (address + 1) >> 8;
+                this->l = (address + 1) & 0xFF;
+            } else if(high == 0x3) { // HL-
+                address = (this->h << 8) + this->l;
+
+                this->h = (address - 1) >> 8;
+                this->l = (address - 1) & 0xFF;
+            }
+
+            // Execute
+            return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), this->a);
+        } break;
+
+        case 0x6: {
+            // Log
+            logger->log("LD r, n8 or LD [HL], n8");
+
+            // Fetch operand
+            uint8_t value = this->gameboy->memory->fetch8(this->pc + 1);
+
+            // Increment PC
+            this->pc += 2;
+
+            if(high == 0x0) return this->LD(this->b, value);
+            else if(high == 0x1) return this->LD(this->d, value);
+            else if(high == 0x2) return this->LD(this->h, value);
+            else if(high == 0x3) return this->LD((uint8_t&) this->gameboy->memory->fetch8((this->h << 8) + this->l), value);
+        } break;
+
+        case 0xA: {
+            // Log
+            logger->log("LD A, [adr]");
+
+            // Increment PC
+            this->pc++;
+
+            // Fetch memory address reference
+            uint8_t address;
+            if(high == 0x0) address = (this->b << 8) + this->c; // BC
+            else if(high == 0x1) address = (this->d << 8) + this->e; // DE
+            else if(high == 0x2) { // HL+
+                address = (this->h << 8) + this->l;
+
+                this->h = (address + 1) >> 8;
+                this->l = (address + 1) & 0xFF;
+            } else if(high == 0x3) { // HL-
+                address = (this->h << 8) + this->l;
+
+                this->h = (address - 1) >> 8;
+                this->l = (address - 1) & 0xFF;
+            }
+
+            // Execute
+            return this->LD(this->a, this->gameboy->memory->fetch8(address));
+        } break;
+
+        case 0xE: {
+            // Log
+            logger->log("LD r, n8");
+
+            // Fetch operand
+            uint8_t value = this->gameboy->memory->fetch8(this->pc + 1);
+
+            // Increment PC
+            this->pc += 2;
+
+            if(high == 0x0) return this->LD(this->c, value);
+            else if(high == 0x1) return this->LD(this->e, value);
+            else if(high == 0x2) return this->LD(this->l, value);
+            else if(high == 0x3) return this->LD(this->a, value);
+        } break;
+    }
+
+    /*
+    
+        Switch case for ADD, ADC, SUB, SBC, AND, XOR, OR, CP on: r r or r [HL] (lines 0x80 to 0xBF)
+    
+    */
+
+    switch(high) {
+        case 0x8: {
+            // Fetch operand
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("ADD A, r or ADC A, r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // ADD A, r
+            if(low <= 0x7) return this->ADD(this->a, r2);
+
+            // ADC A, r
+            else return this->ADDC(this->a, r2);
+        } break;
+
+        case 0x9: {
+            // Fetch operand
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("SUB A, r or SBC A, r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // SUB A, r
+            if(low <= 0x7) return this->SUB(this->a, r2);
+
+            // SBC A, r
+            else return this->SUBC(this->a, r2);
+        } break;
+
+        case 0xA: {
+            // Fetch operand
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("AND A, r or XOR A, r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // AND A, r
+            if(low <= 0x7) return this->AND(this->a, r2);
+
+            // XOR A, r
+            else return this->XOR(this->a, r2);
+        } break;
+
+        case 0xB: {
+            // Fetch operand
+            uint8_t r2 = this->getArith8Operand(low);
+
+            // Log
+            logger->log("OR A, r or CP A, r with r: " + intToHex(r2));
+
+            // Increment PC
+            this->pc++;
+
+            // OR A, r
+            if(low <= 0x7) return this->OR(this->a, r2);
+
+            // CP A, r
+            else return this->CP(this->a, r2);
+        } break;
+    }
+
+    /*
+    
+        Other instructions
+    
+    */
+
+    switch(opcode) {
         case 0x00: {
             // Log
             logger->log("NOP");
 
             // Increment PC
             this->pc++;
+
+            return;
         } break;
 
         case 0x10: { // STOP n8
@@ -68,111 +328,15 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
             logger->log("STOP");
 
             this->gameboy->stop();
+
+            return;
         } break;
 
-        case 0x80: { // ADD A, B
-            // Log
-            logger->log("ADD A, B");
-
-            // Execute
-            this->ADD(this->a, this->b);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
-
-        case 0x81: { // ADD A, C
-            // Log
-            logger->log("ADD A, C");
-
-            // Execute
-            this->ADD(this->a, this->c);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
-
-        case 0x82: { // ADD A, D
-            // Log
-            logger->log("ADD A, D");
-
-            // Execute
-            this->ADD(this->a, this->d);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
-
-        case 0x83: { // ADD A, E
-            // Log
-            logger->log("ADD A, E");
-
-            // Execute
-            this->ADD(this->a, this->e);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
-
-        case 0x84: { // ADD A, H
-            // Log
-            logger->log("ADD A, H");
-
-            // Execute
-            this->ADD(this->a, this->h);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
+        /*
         
-        case 0x85: { // ADD A, L
-            // Log
-            logger->log("ADD A, L");
-
-            // Execute
-            this->ADD(this->a, this->l);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
-
-        case 0x86: { // ADD A, (HL)
-            // Fetch operand
-            uint16_t adress = (this->h << 8) + this->l;
-            uint8_t value = this->gameboy->memory->fetch8(adress);
-
-            // Log
-            logger->log("ADD A, (HL) at adress " + intToHex(adress) + " with value " + intToHex(value));
-
-            // Execute
-            this->ADD(this->a, value);
-
-            // Read and print memory adress again, throw error if value did not change // TODO remove after proper testing
-            uint8_t value2 = this->gameboy->memory->fetch8(adress);
-            if(value == value2) logger->error("Memory adress did not change after ADD A, (HL)");
-
-            // Increment PC
-            this->pc++;
-
-        } break;
-
-        case 0x87: { // ADD A, A
-            // Log
-            logger->log("ADD A, A");
-
-            // Execute
-            this->ADD(this->a, this->a);
-
-            // Increment PC
-            this->pc++;
-
-        } break;
+            0xCx instructions
+        
+        */
 
         case 0xC6: { // ADD A, n8
             // Fetch operand
@@ -181,49 +345,95 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
             // Log
             logger->log("ADD A, n8 with value " + intToHex(value));
 
+            // Increment PC
+            this->pc += 2;
+
             // Execute
             this->ADD(this->a, value);
+
+            return;
+
+        } break;
+
+        case 0xCE: { // ADC A, n8
+            // Fetch operand
+            uint8_t value = this->gameboy->memory->fetch8(this->pc + 1);
+
+            // Log
+            logger->log("ADC A, n8 with value " + intToHex(value));
 
             // Increment PC
             this->pc += 2;
 
-        } break;
+            // Execute
+            this->ADDC(this->a, value);
 
-        /*
-        
-            Customs instructions
-        
-        */
-
-        case 0xEB: { // DUMPR
-            this->DUMPR();
-
-            // Increment PC
-            this->pc++;
+            return;
 
         } break;
+    }
 
-        case 0xEC: { // DUMPW
-            this->DUMPW();
+    /*
+    
+        Switch case for custom instructions, DUMPR, DUMPW, DUMPV (0xE3, 0xE4, 0xEB, 0xEC, 0xED)
+    
+    */
 
-            // Increment PC
-            this->pc++;
+    switch(high) {
+        case 0xE: {
+            if(low == 0xB) {
+                this->DUMPR();
 
+                // Increment PC
+                this->pc++;
+            } else if(low == 0xC) {
+                // Read PC + 1 and PC + 2 to get the adress
+                uint8_t r2 = this->gameboy->memory->fetch8(this->pc + 1);
+                uint8_t r3 = this->gameboy->memory->fetch8(this->pc + 2);
+
+                uint16_t adress = (r2 << 8) + r3;
+
+                // Increment PC
+                this->pc += 3;
+
+                // Dump adress
+                logger->log("\033[34mAdress: " + intToHex(adress) + " Value: " + intToHex((uint8_t) this->gameboy->memory->fetch8(adress)) + "\033[0m");
+
+                return;
+            } else if(low == 0xD) this->DUMPV();
         } break;
+    }
 
-        case 0xED: { // DUMPV
-            this->DUMPV();
+    /*
+    
+        Opcode not found
+    
+    */
 
-            // Increment PC
-            this->pc++;
+    logger->error("Unknown opcode: " + intToHex(opcode));
+    this->gameboy->stop();
+}
 
-        } break;
+const uint8_t& CPU::getArith8Operand(const uint8_t opcode) {
+    switch(opcode) {
+        case 0x0: return this->b;
+        case 0x1: return this->c;
+        case 0x2: return this->d;
+        case 0x3: return this->e;
+        case 0x4: return this->h;
+        case 0x5: return this->l;
+        case 0x6: {
+            uint16_t adress = (this->h << 8) + this->l;
+            return (uint8_t&) this->gameboy->memory->fetch8(adress);
+        }
+        case 0x7: return this->a;
 
         default: {
-            logger->error("Unknown opcode: " + intToHex(opcode));
-
+            logger->error("Unknown operand: " + intToHex(opcode));
             this->gameboy->stop();
-        } break;
+
+            return this->a;
+        }
     }
 }
 
@@ -332,6 +542,17 @@ void CPU::setZero() {
 
 void CPU::resetZero() {
     this->f &= 0x7F;
+}
+
+/*
+
+    LD 8 bits, 16 bits
+
+*/
+
+void CPU::LD(uint8_t &r1, const uint8_t &r2) {
+    // Load r2 into r1
+    r1 = r2;
 }
 
 /*
@@ -698,19 +919,9 @@ void CPU::DUMPR() {
 void CPU::DUMPW() {
     // Dump work RAM
     logger->log("Dumping work RAM");
-
-    for(uint16_t i = 0xC000; i < 0xE000; i++) {
-        uint8_t val = this->gameboy->memory->fetch8(i);
-        logger->log(intToHex(i) + ": " + intToHex(val));
-    }
 }
 
 void CPU::DUMPV() {
     // Dump video RAM
     logger->log("Dumping video RAM");
-
-    for(uint16_t i = 0x8000; i < 0xA000; i++) {
-        uint8_t val = this->gameboy->memory->fetch8(i);
-        logger->log(intToHex(i) + ": " + intToHex(val));
-    }
 }
