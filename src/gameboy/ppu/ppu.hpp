@@ -4,11 +4,7 @@
 #include <array>
 #include <cstdint>
 
-
-
 constexpr int TILE_SIZE = 8;
-
-
 
 #define LCDC 0xFF40
 
@@ -20,13 +16,20 @@ constexpr int TILE_SIZE = 8;
 
 
 
-
 class PPU {
 public:
     PPU(Memory& memory);
     ~PPU();
 
-    void step(); // Advances the PPU by one cycle
+    //// Advances the PPU by one cycle
+    void step(); 
+    //enable methods
+    bool PPU::isBGEnabled()() const;
+    bool PPU::isWDEnabled() const;
+    bool PPU::areSpritesEnabled() const;
+
+
+    
     void renderScanline(); // Renders a single scanline
     void drawBackground(); // Draws the background layer
     void drawWindow(); // Draws the window layer
@@ -55,11 +58,9 @@ private:
     Mode currentMode; // Current PPU mode
 
     // Frame buffer to store pixel data
-    std::array<uint8_t, ScreenWidth * ScreenHeight> framebuffer;
+    std::array<std::array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT> framebuffer;
 
 
-
-    
 
     //Internal methods TBD
     void fetchBackgroundTileData(int scanline);

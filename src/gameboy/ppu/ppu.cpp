@@ -4,6 +4,8 @@
 
 using namespace std;
 
+
+
 PPU::PPU(Memory& memory) : memory(memory), cycleCounter(0), LY(0) {
     // Initialize framebuffer
     framebuffer.fill(0);
@@ -13,67 +15,99 @@ PPU::~PPU() {
     // Destructor
 }
 
-void PPU::step(unsigned int cycles) {
-    cycleCounter += cycles;
+PPU::Mode PPU::getMode() const {
+    return currentMode;
+}
 
-    switch (currentMode) {
-        case Mode::HBlank:
-            if (cycleCounter >= 204) {
-                cycleCounter -= 204;
-                LY++;
-                if (LY == 143) {
-                    currentMode = Mode::VBlank;
-                    // Trigger VBlank interrupt
-                } else {
-                    currentMode = Mode::OAMSearch;
-                }
-            }
-            break;
 
-        case Mode::VBlank:
-            if (cycleCounter >= 456) {
-                cycleCounter -= 456;
-                LY++;
-                if (LY > 153) {
-                    LY = 0;
-                    currentMode = Mode::OAMSearch;
-                }
-            }
-            break;
+void PPU::step(){
+    cycleCounter++;
 
+    if (cycleCounter >= 456){
+        cycleCounter = 0;
+        LY++;
+
+        if (LY == 144) { //on est a la fin de la visible scanline
+            currentMode = Mode::VBlank;
+            this->gameboy->CPU->triggerInterrupt(Interrupt::VBlank); //enom interrupt avec VBlank = 0 par exemple
+            renderFrame();
+        } 
+        else if (LY > 153) { //on est a la fin de la vblank
+            LY = 0;
+            currentMode = Mode::OAMSearch;
+        }
+    }
+
+    switch(currentMode){
         case Mode::OAMSearch:
-            if (cycleCounter >= 80) {
-                cycleCounter -= 80;
+            if (cycleCounter >= 80){
                 currentMode = Mode::Drawing;
             }
             break;
-
         case Mode::Drawing:
-            if (cycleCounter >= 172) {
-                cycleCounter -= 172;
+            if (cycleCounter >= 252){
                 currentMode = Mode::HBlank;
-                // Render the current scanline
                 renderScanline();
             }
             break;
+        case Mode::HBlank:
+            if (cycleCounter >= 456){
+                if (LY < 144){
+                    currentMode = Mode::OAMSearch;
+                }
+            }
+            break;
+        case Mode::VBlank:
+            if (cycleCounter >= 456){
+                if (LY > 153){
+                    currentMode = Mode::OAMSearch;
+                }
+            }
+            break;
+    }
+    uint8_t& stat = (uint8_t&)memory.fetch8(STAT);
+    stat = (stat & 0xFC) | static_cast<uint8_t>(currentMode);
+}
+
+//check bit 0 of LCDC to know if the background is enabled
+bool PPU::isBGEnabled() const {
+    uint8_t lcdc = memory.fetch8(LCDC);
+    return lcdc & 0x01;
+}
+
+//check bit 5 of LCDC to know if window is enbled
+bool PPU::isWDEnabled() const {
+    uint8_t lcdc = memory.fetch8(LCDC);
+    return lcdc & 0x20;
+}
+
+//check bit 1 of LCDC to know if sprites are enabled
+bool PPU::areSpritesEnabled() const {
+    uint8_t lcdc = memory.fetch8(LCDC);
+    return lcdc & 0x02;
+}
+
+
+void PPU::renderScanline(){
+    if (isBGEnabled()){
+        drawBackground();
+    }
+    if (isWDEnabled()){
+        drawWindow();
+    }
+    if (areSpritesEnabled()){
+        drawSprites();
     }
 }
 
-PPU::Mode PPU::getMode() const {
-    return currentMode;
-}
 
 
-PPU::Mode PPU::getMode() const {
-    return currentMode;
-}
 
-void PPU::renderScanline() {
-    // Render the background, window, and sprites for the current scanline
-    drawBackground();
-    drawWindow();
-    drawSprites();
-}
+
+
+
+
+
 
 void PPU::drawBackground() {
     // Draw the background layer for the current scanline
@@ -90,41 +124,42 @@ void PPU::drawSprites() {
     fetchSpriteData(LY);
 }
 
-void PPU::fetchBackgroundTileData(int scanline) {
+void PPU::fetchBackgroundTileData() {
     uint8_t lcdc = memory.fetch8(LCDC); // LCDC register
     uint8_t scx = memory.fetch8(SCX);  // Scroll X
     uint8_t scy = memory.fetch8(SCY);  // Scroll Y
     uint8_t bgp = memory.fetch8(BGP);  // Background palette
 
-    // determine tile map base addres (bit 3 of lcdc)    
+    // determine quel bg tile map to use (bit 3 of lcdc)    
     uint16_t tileMapBase = (lcdc & 0x08) ? 0x9C00 : 0x9800;
 
-    // determine tile data mode (bit 4 of lcdc)
+    // determine tile data mode (bit 4 of lcdc) signed indexing ou non
     bool tileDataMode = (lcdc & 0x10) != 0; // True -> 0x8000 mode, False -> 0x8800 mode
 
-    // Compute tile row index
-    int tileRow = (((scanline + scy) & 0xFF) / 8) & 0x1F;//0 &x1F it's like doing mode 32 (pour rester dasn la bonne plage 0-31)
+    // calculate the starting Y position in the background
+    int tileRow = (((LY + scy) & 0xFF) / TILE_SIZE) & 0x1F;// &x1F it's like doing mod 32 (pour rester dasn la bonne plage 0-31)
 
 
-    for (int x = 0; x < ScreenWidth; x++) {
-        int tileCol = ((x + scx) / 8) & 0x1F;
+    for (int x = 0; x < SCREEN_WIDTH; x++) {
+        //calculer la starting x position in the background
+        int tileCol = ((x + scx) / TILE_SIZE) & 0x1F;
 
 
-        // Compute the address of the tile index
+        //ici on trouve le tile index dans le background tile map
         uint16_t tileAddress = tileMapBase + (tileRow * 32) + tileCol;
         uint8_t tileIndex = memory.fetch8(tileAddress);
 
-        // Resolve tile memory address
+        // calculer l'address du tile data
         uint16_t tileDataAddress;
         if (tileDataMode) {
-            tileDataAddress = 0x8000 + (tileIndex * 16);
+            tileDataAddress = 0x8000 + (tileIndex * 16); //“$8000 method” uses $8000 as its base pointer and uses an unsigned addressing
         } else {
             int8_t signedTileIndex = static_cast<int8_t>(tileIndex);
-            tileDataAddress = 0x9000 + (signedTileIndex * 16);
+            tileDataAddress = 0x9000 + (signedTileIndex * 16); //“$8800 method” uses $9000 as its base pointer and uses a signed addressing
         }
 
-        // Compute pixel row inside the tile
-        int tileY = 2*(((scanline + scy) & 7)); // c'est comme faire mod 8
+        // determiner la ligne dans la tile to render
+        int tileY = 2*(((LY + scy) & 7)); // c'est comme faire mod 8
 
         uint16_t rowAddress = tileDataAddress + tileY;
 
@@ -141,7 +176,7 @@ void PPU::fetchBackgroundTileData(int scanline) {
         uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
 
         // Store the pixel in the framebuffer
-        framebuffer[(scanline * ScreenWidth) + x] = color;
+        framebuffer[(LY * ScreenWidth) + x] = color;
     }
 }
 
