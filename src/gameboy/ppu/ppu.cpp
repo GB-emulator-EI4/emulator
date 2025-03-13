@@ -151,9 +151,9 @@ void PPU::fetchWindowTileData(int scanline) {
 }
 
 void PPU::fetchSpriteData(int scanline) {
-    uint8_t lcdc = memory.fetch8(LCDC); // LCDC register
+    uint8_t lcdc = memory.fetch8(LCDC); 
     // check the bit 2 of lcdc to know sprite size
-    bool spriteSize = lcdc & 0x04; // Sprite size (8x8 or 8x16)
+    bool spriteSize = lcdc & 0x04; // sprite size can be 8x8 or 8x16
 
     //Sprite data is stored in the OAM section of memory which can fit up to 40 sprites.
     for (int i = 0; i < 40; i++) {
