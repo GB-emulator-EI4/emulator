@@ -25,6 +25,13 @@ string intToHex(uint16_t i) {
     return "0x" + stream.str();
 }
 
+string intToHex(int8_t i) {
+    stringstream stream;
+    stream << uppercase << hex << setw(2) << setfill('0') << (uint16_t) i; // Keep the (uint16_t) cast to avoid i being interpreted as a char
+
+    return "0x" + stream.str();
+}
+
 /*
 
     Check if carry and half carry occured on addition

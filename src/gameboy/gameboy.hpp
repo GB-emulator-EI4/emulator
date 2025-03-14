@@ -26,8 +26,8 @@ class Gameboy {
         Memory* memory;
 
         // Init functions
-        inline void setBootRom(const string &bootRomPath) { this->memory->loadRom(BOOTROM_OFFSET, bootRomPath, BOOTROM_SIZE); }
-        inline void setGameRom(const string &gameRomPath) { this->memory->loadRom(ROM_FIXED_OFFSET, gameRomPath, ROM_FIXED_SIZE); }
+        inline void setBootRom(const string &bootRomPath) { this->memory->loadRom(BOOTROM, BOOTROM_OFFSET, bootRomPath, BOOTROM_SIZE); }
+        inline void setGameRom(const string &gameRomPath) { this->memory->loadRom(ROM_FIXED, ROM_FIXED_OFFSET, gameRomPath, ROM_FIXED_SIZE); }
 
         // Functions
         void run();
@@ -44,4 +44,7 @@ class Gameboy {
     
         // Vars
         bool running;
+
+        // Cycle status
+        int cyclesCount;
 };

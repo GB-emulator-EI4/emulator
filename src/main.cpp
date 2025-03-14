@@ -13,19 +13,22 @@ int main() {
 
     // Available levels: LOG_LOG, LOG_ERROR
     // Available domains: Main, Gameboy, CPU, Memory, PPU
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR}, {"Gameboy", "CPU", "Memory", "PPU"}, {"Constructor", "Destructor", "Fetch", "Decode"});
+    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR}, {"Gameboy", "CPU", "Memory", "PPU"}, {"Constructor", "Destructor", "CPU Fetch", "Decode"});
 
     Log* logger = masterLogger->getLogger("Main");
+
+    // Log
+    logger->log("Logger configured, initializing Gameboy");
 
     // Get instance (will init the Gameboy)
     Gameboy* gameboy = Gameboy::getInstance();
     
     // Load ROMs
-    logger->log("Loading ROMs");
+    logger->log("Set BOOT ROM");
     gameboy->setBootRom(BOOT_ROM_PATH);
 
     // Load game ROM
-    logger->log("Loading game ROM");
+    logger->log("Set game ROM");
     gameboy->setGameRom(ROM_PATH);
 
     // Run the emulator

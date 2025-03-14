@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <vector>
 
 #include "../logging/log/log.hpp"
 
@@ -30,9 +31,11 @@ class CPU {
         // Execution steps
         uint8_t fetch(); // Fetch the next instruction
         void decodeAndExecute(const uint8_t opcode);
+        void decodeAndExecutePrefixed(const uint8_t opcode);
 
         // Operand fetchers
         const uint8_t& getArith8Operand(const uint8_t opcode);
+        uint8_t& getIncDec8Operand(const uint8_t opcode);
 
         /*
         
@@ -41,12 +44,13 @@ class CPU {
         */
 
         // JUMP
-        bool JRN(int8_t& e8, char& flag); // 0x20, 0x30
-        bool JR(int8_t& e8, char& flag); // 0x18, 0x28
+        bool JRN(int8_t& e8, const uint8_t& flag); // 0x20, 0x30
+        bool JRS(int8_t& e8, const uint8_t& flag); // 0x18, 0x28
 
         // LD
         void LD(uint8_t& r1, const uint8_t& r2);
-        void LD(uint8_t& r1, uint8_t& r2, uint8_t& r3, uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
+        void LD(uint16_t& r1, const uint8_t& r3, const uint8_t& r4);
+        void LD(uint8_t& r1, uint8_t& r2, const uint8_t& r3, const uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
 
         // ADD, ADDC
         void ADD(uint8_t &r1, const uint8_t &r2);
@@ -62,11 +66,11 @@ class CPU {
 
         // INC
         void INC(uint8_t &r1);
-        void INC(uint16_t &r1);
+        void INC(uint8_t &r1, uint8_t &r2);
 
         // DEC
         void DEC(uint8_t &r1);
-        void DEC(uint16_t &r1);
+        void DEC(uint8_t &r1, uint8_t &r2);
 
         // AND
         void AND(uint8_t &r1, const uint8_t &r2);
@@ -88,6 +92,20 @@ class CPU {
 
         // CPL complement accumulator
         void CPL();
+
+        // PUSH
+        void PUSH(const uint8_t &r1, const uint8_t &r2);
+
+        // CALL
+        void CALL(const uint16_t &adr);
+
+        /*
+        
+            Prefixed instructions
+        
+        */
+
+        void BIT(const uint8_t &bit, const uint8_t &r);
 
         /*
         

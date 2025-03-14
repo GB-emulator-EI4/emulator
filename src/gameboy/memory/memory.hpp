@@ -7,6 +7,25 @@ using namespace std;
 
 #include "../logging/log/log.hpp"
 
+// Memory block
+#define BOOTROM 0
+
+#define ROM_FIXED 1
+#define ROM_BANKED 2
+
+#define VRAM 3
+
+#define EXTRAM 4
+
+#define WRAM_FIXED 5
+#define WRAM_BANKED 6
+
+#define OAM 7
+
+#define IO 8
+
+#define HRAM 9
+
 // Memory block sizes
 #define BOOTROM_SIZE 256
 
@@ -21,6 +40,8 @@ using namespace std;
 #define WRAM_BANKED_SIZE 4096
 
 #define OAM_SIZE 160
+
+#define IO_SIZE 128
 
 #define HRAM_SIZE 128
 
@@ -39,6 +60,8 @@ using namespace std;
 
 #define OAM_OFFSET 0xFE00
 
+#define IO_OFFSET 0xFF00
+
 #define HRAM_OFFSET 0xFF80
 
 class Memory {
@@ -51,7 +74,7 @@ class Memory {
         // int& fetch16(int &address); // Fetch 16-bit value from memory
 
         // ROM load functions
-        void loadRom(const int &startAdress, const string &bootromPath, const int &size); // Load the boot ROM
+        void loadRom(const int &memoryBlock, const int &startAdress, const string &bootromPath, const int &size); // Load the boot ROM
 
     private:
         Log* logger;
@@ -69,6 +92,8 @@ class Memory {
         char wramBanked[WRAM_BANKED_SIZE]; // 4KB
 
         char oam[OAM_SIZE]; // 160B
+
+        char io[IO_SIZE]; // 128B
 
         char hram[HRAM_SIZE]; // 128B
 

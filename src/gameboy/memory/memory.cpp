@@ -32,7 +32,7 @@ Memory::~Memory() {
 
 */
 
-void Memory::loadRom(const int &startAdress, const string &romPath, const int &memorySize) {
+void Memory::loadRom(const int &memoryBlock, const int &startAdress, const string &romPath, const int &memorySize) {
     // Open ROM file
     ifstream romFile(romPath, ios::binary);
 
@@ -40,7 +40,7 @@ void Memory::loadRom(const int &startAdress, const string &romPath, const int &m
     if(!romFile.is_open()) {
         logger->error("Error: Could not open ROM file : " + romPath); 
         exit(1);
-    }
+    } else logger->log("ROM at path " + romPath + " opened successfully");
 
     // Determine size
     auto fileSize = std::filesystem::file_size(romPath);
@@ -49,7 +49,13 @@ void Memory::loadRom(const int &startAdress, const string &romPath, const int &m
     logger->log("Loading ROM at address " + to_string(startAdress) + " with size " + to_string(fileSize));
 
     // Read ROM file
-    romFile.read(this->romFixed, memorySize); // TODO: select ROM to load into
+    if(memoryBlock == BOOTROM) romFile.read(this->bootrom, memorySize);
+    else if(memoryBlock == ROM_FIXED) romFile.read(this->romFixed, memorySize);
+    else if(memoryBlock == ROM_BANKED) romFile.read(this->romBanked, memorySize);
+    else {
+        logger->error("Error: Invalid memory block, loading ROM at address " + to_string(startAdress));
+        exit(1);
+    }
 
     // Close ROM file
     romFile.close();
@@ -81,6 +87,9 @@ char& Memory::fetch8(const uint16_t &address) {
 
     // Check if the address is in the OAM
     if(address >= OAM_OFFSET && address < OAM_OFFSET + OAM_SIZE) return this->oam[address - OAM_OFFSET];
+
+    // Check if the address is in the IO
+    if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) return this->io[address - IO_OFFSET];
 
     // Check if the address is in the HRAM
     if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) return this->hram[address - HRAM_OFFSET];
