@@ -9,7 +9,7 @@
 #define BOOT_ROM_PATH "roms/boot/dmg0_boot.bin"
 
 // Enable / Disable boot ROM, used for testing
-#define ENABLE_BOOT_ROM true
+#define ENABLE_BOOT_ROM false
 
 /*
 
@@ -27,6 +27,11 @@
 
 // #define ROM_PATH "roms/tests/homemade/ADD/ADD r r.bin"
 
-// #define ROM_PATH "roms/tests/homemade/LD/LD r n8.bin"
-// #define ROM_PATH "roms/tests/homemade/LD/LD r [].bin"
-#define ROM_PATH "roms/tests/homemade/LD/LD [] r.bin"
+// Load
+// #define ROM_PATH "roms/tests/homemade/LD/LD r n.bin" // OK
+// #define ROM_PATH "roms/tests/homemade/LD/LD r r.bin" // OK
+// #define ROM_PATH "roms/tests/homemade/LD/LD r [].bin" // OK
+// #define ROM_PATH "roms/tests/homemade/LD/LD [] r.bin" // OK
+// #define ROM_PATH "roms/tests/homemade/LD/LD [] n.bin" // OK
+// #define ROM_PATH "roms/tests/homemade/LD/LD A [nn].bin" // OK
+// #define ROM_PATH "roms/tests/homemade/LD/LD [nn] A.bin" // OK

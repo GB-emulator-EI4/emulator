@@ -45,15 +45,6 @@ Gameboy::~Gameboy() {
 
 /*
 
-    Init functions
-
-*/
-
-
-
-
-/*
-
     Functions
 
 */
@@ -62,7 +53,7 @@ void Gameboy::run() {
     logger->log("Gameboy starting");
 
     while(this->running) {
-        logger->log("--> Gameboy cycle");
+        logger->log("---> Gameboy cycle");
 
         this->cpu->cycle();
 
