@@ -31,3 +31,7 @@ void Log::log(const string &message) {
 void Log::error(const string &message) {
     Logger::getInstance()->log(LOG_ERROR, domain, message);
 }
+
+void Log::warning(const string &message) {
+    Logger::getInstance()->log(LOG_WARNING, domain, message);
+}

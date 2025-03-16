@@ -25,4 +25,5 @@ class Log {
         // Functions
         void log(const string &message);
         void error(const string &message);
+        void warning(const string &message);
 };

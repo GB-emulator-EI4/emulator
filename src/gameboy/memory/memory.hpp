@@ -1,10 +1,35 @@
 #pragma once
 
 #include <string>
+#include <stdint.h>
 
 using namespace std;
 
 #include "../logging/log/log.hpp"
+
+#include "../gameboy.hpp"
+
+// Forward declaration
+class Gameboy;
+
+// Memory block
+#define BOOTROM 0
+
+#define ROM_FIXED 1
+#define ROM_BANKED 2
+
+#define VRAM 3
+
+#define EXTRAM 4
+
+#define WRAM_FIXED 5
+#define WRAM_BANKED 6
+
+#define OAM 7
+
+#define IO 8
+
+#define HRAM 9
 
 // Memory block sizes
 #define BOOTROM_SIZE 256
@@ -20,6 +45,8 @@ using namespace std;
 #define WRAM_BANKED_SIZE 4096
 
 #define OAM_SIZE 160
+
+#define IO_SIZE 128
 
 #define HRAM_SIZE 128
 
@@ -38,6 +65,8 @@ using namespace std;
 
 #define OAM_OFFSET 0xFE00
 
+#define IO_OFFSET 0xFF00
+
 #define HRAM_OFFSET 0xFF80
 
 class Memory {
@@ -45,14 +74,16 @@ class Memory {
         Memory();
         ~Memory();
 
-        // Memory read functions
-        char& fetch8(int &address); // Fetch 8-bit value from memory
-        // int& fetch16(int &address); // Fetch 16-bit value from memory
+        // Memory read function, fetch 8-bit value from memory
+        char& fetch8(const uint16_t &address);
 
         // ROM load functions
-        void loadRom(const int &startAdress, const string &bootromPath, const int &size); // Load the boot ROM
+        void loadRom(const int &memoryBlock, const int &startAdress, const string &bootromPath, const int &size);
 
     private:
+        // Gameboy ref
+        Gameboy* gameboy;
+
         Log* logger;
 
         char bootrom[BOOTROM_SIZE]; // 256B
@@ -69,10 +100,7 @@ class Memory {
 
         char oam[OAM_SIZE]; // 160B
 
-        char hram[HRAM_SIZE]; // 128B
+        char io[IO_SIZE]; // 128B
 
-        // Init functions
-        // void loadROM(); // Load the ROM
-        // void loadROMFixed(); // Load the fixed ROM
-        // void loadROMBanked(); // Load the banked ROM
+        char hram[HRAM_SIZE]; // 128B
 };

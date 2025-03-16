@@ -10,20 +10,31 @@ using namespace std;
 int main() {
     // Init logger
     Logger* masterLogger = Logger::getInstance();
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR}, {"Main", "Gameboy", "CPU", "Memory", "PPU"});
 
+    // Available levels: LOG_LOG, LOG_ERROR
+    // Available domains: Main, Gameboy, CPU, Memory, PPU
+    masterLogger->setConfig(true, {LOG_ERROR, LOG_WARNING}, {"Gameboy", "CPU", "PPU", "Memory"}, {"Constructor", "Destructor", "CPU Fetch"});
+
+    // Get logger for main
     Log* logger = masterLogger->getLogger("Main");
+
+    // Log
+    logger->log("Logger configured, initializing Gameboy");
 
     // Get instance (will init the Gameboy)
     Gameboy* gameboy = Gameboy::getInstance();
     
     // Load ROMs
-    logger->log("Loading ROMs");
+    logger->log("Set BOOT ROM");
     gameboy->setBootRom(BOOT_ROM_PATH);
 
     // Load game ROM
-    logger->log("Loading game ROM");
-    gameboy->setGameRom(GAME_ROM_PATH);
+    logger->log("Set game ROM");
+    gameboy->setGameRom(ROM_PATH);
+
+    // Run the emulator
+    logger->log("Running emulator");
+    gameboy->run();
 
     // Free everything
     delete gameboy;

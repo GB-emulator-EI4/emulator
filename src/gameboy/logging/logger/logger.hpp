@@ -10,6 +10,7 @@ class Log;
 
 #define LOG_LOG 1
 #define LOG_ERROR 2
+#define LOG_WARNING 3
 
 class Logger {
     public:
@@ -24,7 +25,7 @@ class Logger {
 
         void log(const char &level, const string &domain, const string &message);
 
-        void setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains);
+        void setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter);
 
     private:
         // Instance
@@ -38,6 +39,7 @@ class Logger {
 
         vector<char> enabledLevels;
         vector<string> enabledDomains;
+        vector<string> wordFilter;
 
     protected:
 
