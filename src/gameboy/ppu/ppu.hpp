@@ -14,6 +14,9 @@ constexpr int TILE_SIZE = 8;
 #define BGP 0xFF47
 #define STAT 0xFF41
 
+#define WX 0xFF4B
+#define WY 0xFF4A
+
 
 
 class PPU {

@@ -170,18 +170,63 @@ void PPU::fetchBackgroundTileData() {
         // Compute the pixel's color for the current screen X
         int tileX = (x + scx) & 7;
         int bit = 7 - tileX; // Pixels are stored in MSB order
-        uint8_t colorIndex = ((highByte >> bit) & 1) << 1 | ((lowByte >> bit) & 1);
+        uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
 
         // Apply the BGP palette
         uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
 
         // Store the pixel in the framebuffer
-        framebuffer[(LY * ScreenWidth) + x] = color;
+        framebuffer[(LY * SCREEN_WIDTH) + x] = color;
     }
 }
 
 
-void PPU::fetchWindowTileData(int scanline) {
+void PPU::fetchWindowTileData() {
+    uint8_t lcdc = memory.fetch8(LCDC);
+    uint8_t wx = memory.fetch8(WX);
+    uint8_t wy = memory.fetch8(WY);
+    uint8_t bgp = memory.fetch8(BGP);
+
+    if (!(lcdc & 0x20) || LY < wy || wy>143 || wx < 7 || wx > 166) return;
+
+    uint16_t tileMapBase = (lcdc & 0x40) ? 0x9C00 : 0x9800;
+
+    bool tileDataMode = (lcdc & 0x10) != 0;
+
+    int tileRow = (((LY - wy) / TILE_SIZE) & 0x1F);
+
+    for (int x = 0; x < SCREEN_WIDTH; x++){
+        int windowX = x - wx + 7;
+        if (windowX < 0 ) continue;
+
+        int tileCol = (windowX / TILE_SIZE) & 0x1F;
+
+        uint16_t tileAddress = tileMapBase + (tileRow * 32) + tileCol;
+        uint8_t tileIndex = memory.fetch8(tileAddress);
+
+        uint16_t tileDataAddress;
+        if (tileDataMode) {
+            tileDataAddress = 0x8000 + (tileIndex * 16);
+        } else {
+            int8_t signedTileIndex = static_cast<int8_t>(tileIndex);
+            tileDataAddress = 0x9000 + (signedTileIndex * 16);
+        }
+
+        int tileY = 2 * ((LY - wy) & 7);
+
+        uint16_t rowAddress = tileDataAddress + tileY;
+
+        uint8_t lowByte = memory.fetch8(rowAddress);
+        uint8_t highByte = memory.fetch8(rowAddress + 1);
+
+        int tileX = windowX & 7;
+        int bit = 7 - tileX;
+        uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
+
+        uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
+
+        framebuffer[(LY * SCREEN_WIDTH) + x] = color;
+    }
 
 }
 
