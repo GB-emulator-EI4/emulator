@@ -60,6 +60,7 @@ void Logger::log(const char &level, const string &domain, const string &message)
 
     // Log, if domain is error then print in red
     if(level == LOG_ERROR) cout << "\033[1;31mError: " << domain << ": " << message << "\033[0m" << endl;
+    else if(level == LOG_WARNING) cout << "\033[1;33mWarning: " << domain << ": " << message << "\033[0m" << endl;
     else cout << "[" + domain + "] " << message << endl;
 }
 

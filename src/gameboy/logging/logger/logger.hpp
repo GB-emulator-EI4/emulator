@@ -10,6 +10,7 @@ class Log;
 
 #define LOG_LOG 1
 #define LOG_ERROR 2
+#define LOG_WARNING 3
 
 class Logger {
     public:

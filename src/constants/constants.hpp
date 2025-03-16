@@ -27,7 +27,7 @@
 
 // #define ROM_PATH "roms/tests/homemade/ADD/ADD r r.bin"
 
-// Load
+// LD
 // #define ROM_PATH "roms/tests/homemade/LD/LD r n.bin" // OK
 // #define ROM_PATH "roms/tests/homemade/LD/LD r r.bin" // OK
 // #define ROM_PATH "roms/tests/homemade/LD/LD r [].bin" // OK
@@ -35,3 +35,7 @@
 // #define ROM_PATH "roms/tests/homemade/LD/LD [] n.bin" // OK
 // #define ROM_PATH "roms/tests/homemade/LD/LD A [nn].bin" // OK
 // #define ROM_PATH "roms/tests/homemade/LD/LD [nn] A.bin" // OK
+
+// LDH
+// #define ROM_PATH "roms/tests/homemade/LDH/LDH r (r).bin" // OK
+#define ROM_PATH "roms/tests/homemade/LDH/LDH (r) r.bin"

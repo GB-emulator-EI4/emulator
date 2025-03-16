@@ -89,7 +89,12 @@ char& Memory::fetch8(const uint16_t &address) {
     if(address >= OAM_OFFSET && address < OAM_OFFSET + OAM_SIZE) return this->oam[address - OAM_OFFSET];
 
     // Check if the address is in the IO
-    if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) return this->io[address - IO_OFFSET];
+    if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) {
+        // Log warining if accessing the IO
+        logger->warning("Warning: Accessing IO at address " + to_string(address));
+
+        return this->io[address - IO_OFFSET];
+    }
 
     // Check if the address is in the HRAM
     if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) return this->hram[address - HRAM_OFFSET];
