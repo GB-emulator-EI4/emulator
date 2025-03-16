@@ -9,7 +9,7 @@
 #define BOOT_ROM_PATH "roms/boot/dmg0_boot.bin"
 
 // Enable / Disable boot ROM, used for testing
-#define ENABLE_BOOT_ROM false
+#define ENABLE_BOOT_ROM true
 
 /*
 

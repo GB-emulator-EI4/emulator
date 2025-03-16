@@ -12,6 +12,7 @@ using namespace std;
 
 // Forward declaration
 class CPU;
+class Memory;
 
 class Gameboy {
     public:
@@ -26,16 +27,20 @@ class Gameboy {
         Memory* memory;
 
         // Init functions
-        inline void setBootRom(const string &bootRomPath) { this->memory->loadRom(BOOTROM, BOOTROM_OFFSET, bootRomPath, BOOTROM_SIZE); }
-        inline void setGameRom(const string &gameRomPath) { this->memory->loadRom(ROM_FIXED, ROM_FIXED_OFFSET, gameRomPath, ROM_FIXED_SIZE); }
+        void setBootRom(const string &bootRomPath);
+        void setGameRom(const string &gameRomPath);
 
         // Functions
         void run();
         void stop();
 
+        void LCDcycle();
+
     private:
         // Singleton instance
         static Gameboy* instance;
+
+        int dots;
 
         // Constructors
         Gameboy();

@@ -8,6 +8,7 @@ using namespace std;
 
 #include "../../constants/constants.hpp"
 #include "../logging/logger/logger.hpp"
+#include "../utils/utils.hpp"
 
 #include "memory.hpp"
 
@@ -90,16 +91,29 @@ char& Memory::fetch8(const uint16_t &address) {
 
     // Check if the address is in the IO
     if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) {
+        // Log warning if reading interrupts infos
+        if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+
+        // Warning if reading LCD status
+        else if(address >= 0xFF40 && address <= 0xFF45) {
+            // logger->warning("Warning: Reading LCD infos at address " + intToHex(address));
+        }
+        
         // Log warining if accessing the IO
-        logger->warning("Warning: Accessing IO at address " + to_string(address));
+        else logger->warning("Warning: Accessing IO at address " + intToHex(address));
 
         return this->io[address - IO_OFFSET];
     }
 
     // Check if the address is in the HRAM
-    if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) return this->hram[address - HRAM_OFFSET];
+    if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) {
+        // Log warning if reading interrupts infos
+        if(address == 0xFFFF) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+        
+        return this->hram[address - HRAM_OFFSET];
+    }
 
     // If the address is not in any of the memory blocks, throw an error
-    logger->error("Error: Invalid memory address, reading at address " + to_string(address));
+    logger->error("Error: Invalid memory address, reading at address " + intToHex(address));
     exit(1);
 }

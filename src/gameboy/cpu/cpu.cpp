@@ -188,8 +188,6 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
             } else if(high == 0x3) { // HL-
                 address = (this->h << 8) + this->l;
 
-                cout << "--------> Address: " << intToHex(address) << endl;
-
                 this->h = (address - 1) >> 8;
                 this->l = (address - 1) & 0xFF;
             }

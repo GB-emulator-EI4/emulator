@@ -7,6 +7,11 @@ using namespace std;
 
 #include "../logging/log/log.hpp"
 
+#include "../gameboy.hpp"
+
+// Forward declaration
+class Gameboy;
+
 // Memory block
 #define BOOTROM 0
 
@@ -76,6 +81,9 @@ class Memory {
         void loadRom(const int &memoryBlock, const int &startAdress, const string &bootromPath, const int &size);
 
     private:
+        // Gameboy ref
+        Gameboy* gameboy;
+
         Log* logger;
 
         char bootrom[BOOTROM_SIZE]; // 256B
