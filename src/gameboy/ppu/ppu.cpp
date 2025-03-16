@@ -101,27 +101,19 @@ void PPU::renderScanline(){
 }
 
 
-
-
-
-
-
-
-
-
 void PPU::drawBackground() {
     // Draw the background layer for the current scanline
-    fetchBackgroundTileData(LY);
+    fetchBackgroundTileData();
 }
 
 void PPU::drawWindow() {
     // Draw the window layer for the current scanline
-    fetchWindowTileData(LY);
+    fetchWindowTileData();
 }
 
 void PPU::drawSprites() {
     // Draw the sprites for the current scanline
-    fetchSpriteData(LY);
+    fetchSpriteData();
 }
 
 void PPU::fetchBackgroundTileData() {
@@ -230,23 +222,35 @@ void PPU::fetchWindowTileData() {
 
 }
 
-void PPU::fetchSpriteData(int scanline) {
+
+
+void PPU::fetchSpriteData() {
     uint8_t lcdc = memory.fetch8(LCDC); 
     // check the bit 2 of lcdc to know sprite size
     bool spriteSize = lcdc & 0x04; // sprite size can be 8x8 or 8x16
 
+    //on peut avoir max 10 sprites par scanline
+    const int SPRITES_PER_LINE_LIMIT = 10;
+    int spritesRendered = 0;
+
     //Sprite data is stored in the OAM section of memory which can fit up to 40 sprites.
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 40 && spritesRendered < SPRITES_PER_LINE_LIMIT; i++) {
         uint8_t yPos = memory.fetch8(OAM_OFFSET + i * 4) - 16;
         uint8_t xPos = memory.fetch8(OAM_OFFSET + i * 4 + 1) - 8;
-        
         uint8_t tileIndex = memory.fetch8(OAM_OFFSET + i * 4 + 2);
         uint8_t attributes = memory.fetch8(OAM_OFFSET + i * 4 + 3);
 
-        if (scanline >= yPos && scanline < (yPos + (spriteSize ? 16 : 8))) {
-            int tileY = scanline - yPos;
+        int spriteHeight = spriteSize ? 16 : 8;
+
+        if (LY >= yPos && LY < (yPos + spriteHeight)) {
+            spritesRendered++;
+            int tileY = LY - yPos;
             if (attributes & 0x40) { // Vertical flip
-                tileY = (spriteSize ? 15 : 7) - tileY;
+                tileY = spriteHeight - 1 - tileY;
+            }
+
+            if (spriteSize){
+                tileIndex &= 0xFE; //quand on est en 8x16 mode, le bit 0 est ignored
             }
 
             uint16_t tileDataAddress = 0x8000 + (tileIndex * 16) + (tileY * 2);
@@ -254,20 +258,17 @@ void PPU::fetchSpriteData(int scanline) {
             uint8_t highByte = memory.fetch8(tileDataAddress + 1);
 
             for (int x = 0; x < 8; x++) {
-                int bit = 7 - x;
-                if (attributes & 0x20) { // Horizontal flip
-                    bit = x;
-                }
+                int bit = attributes & 0x20 ? x : 7 - x; // Horizontal flip
 
-                uint8_t colorIndex = ((highByte >> bit) & 1) << 1 | ((lowByte >> bit) & 1);
+                uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
                 if (colorIndex == 0) continue; // Transparent
 
-                uint8_t color = (attributes & 0x10) ? memory.fetch8(OBP1) : memory.fetch8(OBP0);
-                color = (color >> (colorIndex * 2)) & 0x03;
+                uint8_t palette = (attributes & 0x10) ? memory.fetch8(OBP1) : memory.fetch8(OBP0);
+                uint8_t color = (palettte >> (colorIndex * 2)) & 0x03;
 
                 int pixelX = xPos + x;
                 if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
-                    framebuffer[(scanline * SCREEN_WIDTH) + pixelX] = color;
+                    framebuffer[(LY * SCREEN_WIDTH) + pixelX] = color;
                 }
             }
         }
