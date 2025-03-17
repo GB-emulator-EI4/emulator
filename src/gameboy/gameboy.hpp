@@ -1,29 +1,55 @@
 #pragma once
 
 #include <string>
+#include <stdint.h>
 
 using namespace std;
 
 #include "cpu/cpu.hpp"
 #include "memory/memory.hpp"
-#include "logger/logger.hpp"
+#include "logging/logger/logger.hpp"
+#include "logging/log/log.hpp"
+
+// Forward declaration
+class CPU;
+class Memory;
 
 class Gameboy {
     public:
-        // Constructors and Destructors
-        Gameboy(const string &bootromPath);
+        // Get instance
+        static Gameboy* getInstance();
+
+        // Destructor
         ~Gameboy();
 
-        // Functions
-        void run();
-
-    private:
         // Components
         CPU* cpu;
         Memory* memory;
 
-        Logger* logger;
+        // Init functions
+        void setBootRom(const string &bootRomPath);
+        void setGameRom(const string &gameRomPath);
+
+        // Functions
+        void run();
+        void stop();
+
+        void LCDcycle();
+
+    private:
+        // Singleton instance
+        static Gameboy* instance;
+
+        int dots;
+
+        // Constructors
+        Gameboy();
+
+        Log* logger;
     
         // Vars
-        bool running = true;
+        bool running;
+
+        // Cycle status
+        int cyclesCount;
 };
