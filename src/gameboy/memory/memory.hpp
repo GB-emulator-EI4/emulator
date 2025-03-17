@@ -44,7 +44,7 @@ class Memory {
         ~Memory();
 
         // Memory read functions
-        char& fetch8(int &address); // Fetch 8-bit value from memory
+        char& fetch8(const int &address); // Fetch 8-bit value from memory
         int& fetch16(int &address); // Fetch 16-bit value from memory
 
     private:

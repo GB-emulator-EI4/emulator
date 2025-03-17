@@ -44,7 +44,7 @@ void Memory::loadBootrom(const string &bootromPath) {
     bootromFile.close();
 }
 
-char& Memory::fetch8(int &address) {
+char& Memory::fetch8(const int &address) {
     // Check if the address is in the boot ROM
     if (address >= BOOTROM_OFFSET && address < ROM_FIXED_OFFSET) return this->bootrom[address];
 

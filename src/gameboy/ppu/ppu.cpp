@@ -1,14 +1,18 @@
 #include <iostream>
 #include "ppu.hpp"
-#include "memory.hpp"
+#include "../memory/memory.hpp"
+#include "../cpu/cpu.hpp"
+
 
 using namespace std;
 
 
 
-PPU::PPU(Memory& memory) : memory(memory), cycleCounter(0), LY(0) {
+PPU::PPU(Memory& memory) : memory(memory), cycleCounter(0), currentLY(0) {
     // Initialize framebuffer
-    framebuffer.fill(0);
+    for (auto& row : framebuffer) {
+        row.fill(0);
+    }
 }
 
 PPU::~PPU() {
@@ -19,21 +23,33 @@ PPU::Mode PPU::getMode() const {
     return currentMode;
 }
 
+const std::array<std::array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT>& PPU::getFramebuffer() const {
+    return framebuffer;
+}
+
 
 void PPU::step(){
     cycleCounter++;
 
     if (cycleCounter >= 456){
         cycleCounter = 0;
-        LY++;
+        currentLY++;
 
-        if (LY == 144) { //on est a la fin de la visible scanline
+        //update LY register in mem
+        uint8_t& nLY = (uint8_t&)memory.fetch8(LY);
+        nLY = currentLY;
+
+        checkLYCInterrupt();
+
+        if (currentLY == 144) { //on est a la fin de la visible scanline
             currentMode = Mode::VBlank;
             this->gameboy->CPU->triggerInterrupt(Interrupt::VBlank); //enom interrupt avec VBlank = 0 par exemple
-            renderFrame();
         } 
-        else if (LY > 153) { //on est a la fin de la vblank
-            LY = 0;
+        else if (currentLY > 153) { //on est a la fin de la vblank
+            currentLY = 0;
+            //update LY register in mem
+            uint8_t& nLY = (uint8_t&)memory.fetch8(LY);
+            nLY = currentLY;
             currentMode = Mode::OAMSearch;
         }
     }
@@ -51,22 +67,37 @@ void PPU::step(){
             }
             break;
         case Mode::HBlank:
-            if (cycleCounter >= 456){
-                if (LY < 144){
-                    currentMode = Mode::OAMSearch;
-                }
+            if (memory.fetch8(STAT) & 0x08){
+                this->gameboy->CPU->triggerInterrupt(Interrupt::HBlank);
             }
             break;
         case Mode::VBlank:
-            if (cycleCounter >= 456){
-                if (LY > 153){
-                    currentMode = Mode::OAMSearch;
-                }
+            if (memory.fetch8(STAT) & 0x10){
+                this->gameboy->CPU->triggerInterrupt(Interrupt::VBlank);
             }
             break;
     }
     uint8_t& stat = (uint8_t&)memory.fetch8(STAT);
     stat = (stat & 0xFC) | static_cast<uint8_t>(currentMode);
+}
+
+
+
+void PPU::checkLYCInterrupt(){
+    uint8_t& stat = (uint8_t&)memory.fetch8(STAT);
+    uint8_t& lyc = (uint8_t&)memory.fetch8(LYC);
+
+    if (lyc == currentLY){
+        stat |= 0x04;
+        if (stat & 0x40){
+            this->gameboy->CPU->triggerInterrupt(Interrupt::LCDC);
+        }
+    } else {
+        stat &= 0xFB;
+    }
+    //update STAT register in mem
+    uint8_t& nSTAT = (uint8_t&)memory.fetch8(STAT);
+    nSTAT = stat;
 }
 
 //check bit 0 of LCDC to know if the background is enabled
@@ -101,6 +132,9 @@ void PPU::renderScanline(){
 }
 
 
+
+
+
 void PPU::drawBackground() {
     // Draw the background layer for the current scanline
     fetchBackgroundTileData();
@@ -129,7 +163,7 @@ void PPU::fetchBackgroundTileData() {
     bool tileDataMode = (lcdc & 0x10) != 0; // True -> 0x8000 mode, False -> 0x8800 mode
 
     // calculate the starting Y position in the background
-    int tileRow = (((LY + scy) & 0xFF) / TILE_SIZE) & 0x1F;// &x1F it's like doing mod 32 (pour rester dasn la bonne plage 0-31)
+    int tileRow = (((currentLY + scy) & 0xFF) / TILE_SIZE) & 0x1F;// &x1F it's like doing mod 32 (pour rester dasn la bonne plage 0-31)
 
 
     for (int x = 0; x < SCREEN_WIDTH; x++) {
@@ -151,7 +185,7 @@ void PPU::fetchBackgroundTileData() {
         }
 
         // determiner la ligne dans la tile to render
-        int tileY = 2*(((LY + scy) & 7)); // c'est comme faire mod 8
+        int tileY = 2*(((currentLY + scy) & 7)); // c'est comme faire mod 8
 
         uint16_t rowAddress = tileDataAddress + tileY;
 
@@ -168,7 +202,7 @@ void PPU::fetchBackgroundTileData() {
         uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
 
         // Store the pixel in the framebuffer
-        framebuffer[(LY * SCREEN_WIDTH) + x] = color;
+        framebuffer[currentLY][x] = color;
     }
 }
 
@@ -179,13 +213,13 @@ void PPU::fetchWindowTileData() {
     uint8_t wy = memory.fetch8(WY);
     uint8_t bgp = memory.fetch8(BGP);
 
-    if (!(lcdc & 0x20) || LY < wy || wy>143 || wx < 7 || wx > 166) return;
+    if (!(lcdc & 0x20) || currentLY < wy || wy>143 || wx < 7 || wx > 166) return;
 
     uint16_t tileMapBase = (lcdc & 0x40) ? 0x9C00 : 0x9800;
 
     bool tileDataMode = (lcdc & 0x10) != 0;
 
-    int tileRow = (((LY - wy) / TILE_SIZE) & 0x1F);
+    int tileRow = (((currentLY - wy) / TILE_SIZE) & 0x1F);
 
     for (int x = 0; x < SCREEN_WIDTH; x++){
         int windowX = x - wx + 7;
@@ -217,7 +251,7 @@ void PPU::fetchWindowTileData() {
 
         uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
 
-        framebuffer[(LY * SCREEN_WIDTH) + x] = color;
+        framebuffer[currentLY][x] = color;
     }
 
 }
@@ -242,9 +276,9 @@ void PPU::fetchSpriteData() {
 
         int spriteHeight = spriteSize ? 16 : 8;
 
-        if (LY >= yPos && LY < (yPos + spriteHeight)) {
+        if (currentLY >= yPos && currentLY < (yPos + spriteHeight)) {
             spritesRendered++;
-            int tileY = LY - yPos;
+            int tileY = currentLY - yPos;
             if (attributes & 0x40) { // Vertical flip
                 tileY = spriteHeight - 1 - tileY;
             }
@@ -268,7 +302,9 @@ void PPU::fetchSpriteData() {
 
                 int pixelX = xPos + x;
                 if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
-                    framebuffer[(LY * SCREEN_WIDTH) + pixelX] = color;
+                    if (!(attributes & 0x80) || framebuffer[currentLY][pixelX] == 0) {
+                    framebuffer[currentLY][pixelX] = color;
+                    }
                 }
             }
         }
