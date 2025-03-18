@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ppu.hpp"
 #include "../memory/memory.hpp"
-#include "../cpu/cpu.hpp"
+#include "../cpu/cpu.hpp" //pour les interrupts (?)
 
 
 using namespace std;
