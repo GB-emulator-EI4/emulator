@@ -254,7 +254,7 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
     
     */
 
-    switch(low) {
+    if(high >= 0x0 && high <= 0x3) switch(low) {
         case 0x1: {
             logger->log("LD rr, n16");
 
@@ -429,6 +429,8 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
         case 0x00: {
             logger->log("NOP");
 
+            this->gameboy->stop();
+
             this->pc++;
             return;
         } break;
@@ -443,6 +445,13 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
             logger->log("STOP");
 
             return this->gameboy->stop();
+        } break;
+
+        case 0x17: { // RLA
+            logger->log("RLA");
+
+            this->pc++;
+            return this->RLA();
         } break;
 
         case 0x18: { // JR e8
@@ -468,6 +477,15 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
             else return;
         } break;
 
+        case 0x28: { // JR Z, e8
+            int8_t e8 = (int8_t) this->gameboy->memory->fetch8(this->pc + 1);
+            logger->log("JR Z, e8 with value " + intToHex(e8));
+
+            this->pc += 2;
+            if(this->JRS(e8, this->getZero())) return;
+            else return;
+        } break;
+
         /*
         
             0x3x instructions
@@ -489,12 +507,33 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
         
         */
 
+        case 0xC1: { // POP BC
+            logger->log("POP BC");
+
+            this->pc++;
+            return this->POP(this->b, this->c);
+        } break;
+
+        case 0xC5: { // PUSH rr
+            logger->log("PUSH rr");
+
+            this->pc++;
+            return this->PUSH(this->b, this->c);
+        } break;
+
         case 0xC6: { // ADD A, n8
             uint8_t value = this->gameboy->memory->fetch8(this->pc + 1);
             logger->log("ADD A, n8 with value " + intToHex(value));
 
             this->pc += 2;
             return this->ADD(this->a, value);
+        } break;
+
+        case 0xC9: { // RET
+            logger->log("RET");
+
+            this->pc++;
+            return this->RET();
         } break;
 
         case 0xCD: { // CALL n16
@@ -699,6 +738,16 @@ void CPU::decodeAndExecutePrefixed(const uint8_t opcode) {
 
             logger->log("BIT " + to_string((high - 3)) + ", r with r: " + intToHex(r));
             return this->BIT(high - 3, r);
+        }
+    }
+    
+    if(high == 0x1) {
+        if(low <= 0x7) { // RL r
+            uint8_t r = this->getArith8Operand(low);
+            logger->log("RL r with r: " + intToHex(r));
+
+            this->pc ++;
+            return this->RL(r);
         }
     }
 
@@ -1233,6 +1282,71 @@ void CPU::PUSH(const uint8_t &r1, const uint8_t &r2) {
 void CPU::CALL(const uint16_t &adr) {
     this->PUSH(this->pc >> 8, this->pc & 0xFF);
     this->pc = adr;
+}
+
+/*
+
+    RET
+
+*/
+
+void CPU::RET() {
+    uint8_t& m1 = (uint8_t&) this->gameboy->memory->fetch8(this->sp);
+    this->sp++;
+
+    uint8_t& m2 = (uint8_t&) this->gameboy->memory->fetch8(this->sp);
+    this->sp++;
+
+    this->pc = (m2 << 8) + m1;
+}
+
+/*
+
+    RL
+
+*/
+
+void CPU::RL(uint8_t &r) {
+    // Rotate r left
+    uint8_t carry = this->getCarry();
+    this->resetCarry();
+
+    if(r & 0x80) this->setCarry();
+
+    r = (r << 1) + carry;
+}
+
+/*
+
+    POP
+
+*/
+
+void CPU::POP(uint8_t &r1, uint8_t &r2) {
+    uint8_t& m1 = (uint8_t&) this->gameboy->memory->fetch8(this->sp);
+    this->sp++;
+
+    uint8_t& m2 = (uint8_t&) this->gameboy->memory->fetch8(this->sp);
+    this->sp++;
+
+    r1 = m1;
+    r2 = m2;
+}
+
+/*
+
+    RLA
+
+*/
+
+void CPU::RLA() {
+    // Rotate a left
+    uint8_t carry = this->getCarry();
+    this->resetCarry();
+
+    if(this->a & 0x80) this->setCarry();
+
+    this->a = (this->a << 1) + carry;
 }
 
 /*

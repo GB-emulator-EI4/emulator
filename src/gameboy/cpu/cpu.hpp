@@ -17,16 +17,17 @@ class CPU {
 
         void cycle(); // Will run a single cycle of the CPU, call in order the following functions: fetch, decode, fetchOperands, executes
 
-    private:
         // Gameboy ref
         Gameboy* gameboy;
-
-        // Personnal logger ref
-        Log* logger;
 
         // Registers
         uint8_t a, f, b, c, d, e, h, l; // 8-bit registers
         uint16_t sp, pc; // 16-bit registers
+
+    private:
+
+        // Personnal logger ref
+        Log* logger;
 
         // Execution steps
         uint8_t fetch(); // Fetch the next instruction
@@ -98,6 +99,18 @@ class CPU {
 
         // CALL
         void CALL(const uint16_t &adr);
+
+        // RET
+        void RET();
+
+        // RL
+        void RL(uint8_t &r);
+
+        // POP
+        void POP(uint8_t &r1, uint8_t &r2);
+
+        // RLA
+        void RLA();
 
         /*
         

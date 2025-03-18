@@ -72,6 +72,8 @@ void Gameboy::run() {
         }
         
         this->dots ++;
+
+        // if(this->cpu->pc == 0xa7) this->stop();
     }
 }
 
@@ -87,7 +89,11 @@ void Gameboy::LCDcycle() {
     uint8_t& ly = (uint8_t&) this->memory->fetch8(0xFF44);
 
     if(this->dots >= 456) {
-        if(ly == 153) ly = 0;
+        if(ly == 153) {
+            ly = 0;
+
+            this->stop();
+        }
         else ly ++;
 
         this->dots = 0;
