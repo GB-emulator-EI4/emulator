@@ -15,7 +15,7 @@ using namespace std;
 template <typename T>
 string intToHex(T i) {
     stringstream stream;
-    stream << uppercase << hex << setw(sizeof(T) * 2) << setfill('0') << (uint16_t) i;
+    stream << uppercase << hex << setw(sizeof(T)) << setfill('0') << (uint16_t) i;
 
     return "0x" + stream.str();
 }

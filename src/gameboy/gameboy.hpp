@@ -40,7 +40,9 @@ class Gameboy {
         void setGameRom(const string &gameRomPath);
 
         // Functions
-        void run();
+        void init();
+        void runMcycle();
+        void freeRun();
 
         inline void pause() { this->running = false; }
         inline void stop() { this->running = false; }

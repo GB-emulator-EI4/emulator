@@ -32,6 +32,26 @@ class CPU {
         void triggerInterrupt(const Interrupt interrupt);
         void clearInterrupt(const Interrupt interrupt);
 
+        /*
+        
+            Custom instructions, used for homemade test ROMS
+            It uses empty instructions slots
+        
+        */
+
+        // DUMP
+        void DUMPR(); // Registers
+        void DUMPW(); // WRAM, Banked WRAM, HRAM
+        void DUMPV(); // VRAM, OAM
+
+        /*
+        
+            Getters and Setters
+        
+        */
+
+        inline const uint16_t& getPC() const { return this->pc; }
+
     private:
         // Gameboy ref
         Gameboy* gameboy;
@@ -59,8 +79,8 @@ class CPU {
         */
 
         // JUMP
-        const bool JRN(const int8_t& e8, const uint8_t& flag); // 0x20, 0x30
-        const bool JRS(const int8_t& e8, const uint8_t& flag); // 0x18, 0x28
+        bool JRN(const int8_t& e8, const uint8_t& flag); // 0x20, 0x30
+        bool JRS(const int8_t& e8, const uint8_t& flag); // 0x18, 0x28
 
         // LD
         void LD(uint8_t& r1, const uint8_t& r2);
@@ -133,18 +153,6 @@ class CPU {
         */
 
         void BIT(const uint8_t &bit, const uint8_t &r);
-
-        /*
-        
-            Custom instructions, used for homemade test ROMS
-            It uses empty instructions slots
-        
-        */
-
-        // DUMP
-        void DUMPR(); // Registers
-        void DUMPW(); // WRAM, Banked WRAM, HRAM
-        void DUMPV(); // VRAM, OAM
 
         /*
 

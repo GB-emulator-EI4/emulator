@@ -53,28 +53,24 @@ Gameboy::~Gameboy() {
 
 */
 
-void Gameboy::run() {
-    logger->log("Gameboy starting");
+void Gameboy::init() {
+    logger->log("Gameboy initializing");
 
     // Reset counters
     this->cyclesCounter = 0;
     this->Mcycles = 0;
     this->Tcycles = 0;
+}
 
-    while(1) {
-        // Handle SDL events
-        if(!this->renderer->handleEvents()) {
-            this->stop();
-        }
+void Gameboy::runMcycle() {
+    // Run one M - cycle
+    logger->log("---> Gameboy cycle");
 
-        // Do not excute PPU or CPU cycles when on pause
-        if(!this->running) break;
-
-        logger->log("---> Gameboy cycle");
-
+    this->cyclesCounter = 0;
+    while(this->cyclesCounter < 4) {
         /*
         
-            PPU cycle
+            PPU T cycle
         
         */
 
@@ -92,17 +88,36 @@ void Gameboy::run() {
 
         /*
         
-            CPU cycle
+            CPU conditinnal M cycle
         
         */
     
-        if((this->cyclesCounter %= 4) == 0) {
+        if(this->cyclesCounter == 3) {
             // CPU cycle
             this->cpu->cycle();
 
             // Count cycles
             this->Mcycles ++;
-        } else this->cyclesCounter ++;
+        }
+        
+        this->cyclesCounter ++;
+    }
+}
+
+void Gameboy::freeRun() {
+    logger->log("Gameboy starting");
+
+    while(1) {
+        // Handle SDL events
+        if(!this->renderer->handleEvents()) {
+            this->stop();
+        }
+
+        // Do not excute PPU or CPU cycles when on pause
+        if(!this->running) break;
+
+        // Run one M - cycle
+        this->runMcycle();
     }
 }
 

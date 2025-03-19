@@ -208,11 +208,11 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
     if(high <= 0x3) switch(low) {
         case 0x1: {
-            logger->log("LD rr, n16");
-
             const uint8_t& r4 = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             const uint8_t& r3 = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
             this->pc += 3;
+
+            logger->log("LD rr, n16 with n16: " + intToHex((uint16_t) (r3 << 8) + r4));
 
             if(high == 0x0) return this->LD(this->b, this->c, r3, r4);
             else if(high == 0x1) return this->LD(this->d, this->e, r3, r4);
@@ -471,14 +471,14 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
         case 0xE0: { // LD [FF00 + n8], A
             const uint8_t& value = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
-            logger->log("LD [FF00 + n8], A with value " + intToHex(value));
+            logger->log("LD [FF00 + n8], A with n8 value " + intToHex(value));
 
             this->pc += 2;
             return this->LD((uint8_t&) this->gameboy->memory->fetch8(0xFF00 + value), this->a);
         } break;
 
         case 0xE2: { // LD [FF00 + C], A
-            logger->log("LD [FF00 + C], A");
+            logger->log("LD [FF00 + C], A with C value " + intToHex(this->c) + ", A: " + intToHex(this->a));
 
             this->pc++;
             return this->LD((uint8_t&) this->gameboy->memory->fetch8(0xFF00 + this->c), this->a);
@@ -531,7 +531,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         } break;
 
         case 0xF2: { // LD A, [FF00 + C]
-            logger->log("LD A, [FF00 + C]");
+            logger->log("LD A, [FF00 + C] with C value " + intToHex(this->c) + ", A: " + intToHex(this->a));
 
             this->pc++;
             return this->LD(this->a, this->gameboy->memory->fetch8(0xFF00 + this->c));
@@ -700,14 +700,14 @@ uint8_t& CPU::getIncDec8Operand(const uint8_t& opcode) {
 
 */
 
-const bool CPU::JRN(const int8_t& e8, const uint8_t& flag) { // 0x20, 0x30 -> jump to pc + e8 if z flag, c flag RESET respectively
+bool CPU::JRN(const int8_t& e8, const uint8_t& flag) { // 0x20, 0x30 -> jump to pc + e8 if z flag, c flag RESET respectively
     if(flag == 0) {
         this->pc += e8;
         return true;
     } else return false;    
 }
 
-const bool CPU::JRS(const int8_t& e8, const uint8_t& flag) { // 0x18, 0x28 -> jump to pc + e8 if z flag, c flag SET respectively
+bool CPU::JRS(const int8_t& e8, const uint8_t& flag) { // 0x18, 0x28 -> jump to pc + e8 if z flag, c flag SET respectively
     if(flag == 1) {
         this->pc += e8;
         return true;
