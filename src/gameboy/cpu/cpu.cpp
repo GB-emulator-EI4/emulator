@@ -742,7 +742,7 @@ void CPU::decodeAndExecutePrefixed(const uint8_t opcode) {
         }
     }
 
-    logger->error("Unknown prefiexed opcode: " + intToHex(opcode));
+    logger->error("Unknown prefixed opcode: " + intToHex(opcode));
     this->gameboy->stop();
 }
 
@@ -1280,17 +1280,25 @@ void CPU::DUMPR() {
 }
 
 void CPU::DUMPW() {
-    // Dump work RAM
-    logger->log("Dumping work RAM");
-
-    // TODO
+    logger->log("\033[36Dumping work RAM\033[0m"); // work ram contained between 0xC000 and 0xDFFF dc iterate over these lines to display their content
+    for (uint16_t addr = 0xC000; addr <= 0xDFFF; addr += 16) {
+        std::string line = intToHex(addr) + ": ";
+        for (uint8_t i = 0; i < 16; i++) {
+            line += intToHex(this->gameboy->memory->fetch8(addr + i)) + " ";
+        }
+        logger->log("\033[36" + line + "\033[0m");
+    }
 }
 
-void CPU::DUMPV() {
-    // Dump video RAM
-    logger->log("Dumping video RAM");
-
-    // TODO
+void CPU::DUMPV() { // vram stored b/w 0x8000 and 0x9FFF
+    logger->log("\033[96Dumping video RAM\033[0m");
+    for (uint16_t addr = 0x8000; addr <= 0x9FFF; addr += 16) {
+        std::string line = intToHex(addr) + ": ";
+        for (uint8_t i = 0; i < 16; i++) {
+            line += intToHex(this->gameboy->memory->fetch8(addr + i)) + " ";
+        }
+        logger->log("\033[96" + line + "\033[0m");
+    }
 }
 
 /*
