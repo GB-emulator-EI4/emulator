@@ -19,7 +19,7 @@ void cleanup() {
     delete masterLogger;
 }
 
-// Minisheel, available commands: q (exit), help (show available commands), m (run one M cycle), f (free run), dr (dump registers), ra (run until pc reaches address)
+// Minisheel, available commands: q (exit), help (show available commands), m (run one M cycle), f (free run), dr (dump registers), ra (run until pc reaches address), rd (read address)
 
 void minishell() {
     string command;
@@ -48,6 +48,14 @@ void minishell() {
             cin >> hex >> address;
 
             while(gameboy->cpu->getPC() != address) gameboy->runMcycle();
+        }
+        else if(command == "rd") {
+            uint16_t address;
+
+            cout << "Enter address: ";
+            cin >> hex >> address;
+
+            cout << "Value at address " << intToHex(address) << ": " << intToHex((uint8_t&) gameboy->memory->fetch8(address)) << endl;
         }
         else if(command == "help") cout << "Available commands: q (exit), help" << endl;
         else break;
