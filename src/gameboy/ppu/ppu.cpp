@@ -300,7 +300,7 @@ void PPU::fetchSpriteData() {
                 if (colorIndex == 0) continue; // Transparent
 
                 uint8_t palette = (attributes & 0x10) ? this->gameboy->memory->fetch8(OBP1) : this->gameboy->memory->fetch8(OBP0);
-                uint8_t color = (palettte >> (colorIndex * 2)) & 0x03;
+                uint8_t color = (palette >> (colorIndex * 2)) & 0x03;
 
                 int pixelX = xPos + x;
                 if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
