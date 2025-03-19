@@ -26,4 +26,15 @@ class Log {
         void log(const string &message);
         void error(const string &message);
         void warning(const string &message);
+
+        // Operator overloads for normal
+        Log& operator << (const string &message) {
+            this->log(message);
+            return *this;
+        }
+
+        Log& operator >> (const string &message) {
+            this->error(message);
+            return *this;
+        }
 };

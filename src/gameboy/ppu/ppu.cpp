@@ -8,7 +8,9 @@ using namespace std;
 
 
 
-PPU::PPU(Memory& memory) : memory(memory), cycleCounter(0), currentLY(0) {
+PPU::PPU(Gameboy* gameboy) : gameboy(gameboy), cycleCounter(0), currentLY(0) {
+    // TODO set current mode default value
+
     // Initialize framebuffer
     for (auto& row : framebuffer) {
         row.fill(0);
@@ -36,19 +38,19 @@ void PPU::step(){
         currentLY++;
 
         //update LY register in mem
-        uint8_t& nLY = (uint8_t&)memory.fetch8(LY);
+        uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
         nLY = currentLY;
 
         checkLYCInterrupt();
 
         if (currentLY == 144) { //on est a la fin de la visible scanline
             currentMode = Mode::VBlank;
-            this->gameboy->CPU->triggerInterrupt(Interrupt::VBlank); //enom interrupt avec VBlank = 0 par exemple
+            this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank); //enom interrupt avec VBlank = 0 par exemple
         } 
         else if (currentLY > 153) { //on est a la fin de la vblank
             currentLY = 0;
             //update LY register in mem
-            uint8_t& nLY = (uint8_t&)memory.fetch8(LY);
+            uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
             nLY = currentLY;
             currentMode = Mode::OAMSearch;
         }
@@ -67,54 +69,54 @@ void PPU::step(){
             }
             break;
         case Mode::HBlank:
-            if (memory.fetch8(STAT) & 0x08){
-                this->gameboy->CPU->triggerInterrupt(Interrupt::HBlank);
+            if (this->gameboy->memory->fetch8(STAT) & 0x08){
+                // this->gameboy->cpu->triggerInterrupt(Interrupt::HBlank); // TODO is there a HBlank interrupt?
             }
             break;
         case Mode::VBlank:
-            if (memory.fetch8(STAT) & 0x10){
-                this->gameboy->CPU->triggerInterrupt(Interrupt::VBlank);
+            if (this->gameboy->memory->fetch8(STAT) & 0x10){
+                this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
             }
             break;
     }
-    uint8_t& stat = (uint8_t&)memory.fetch8(STAT);
+    uint8_t& stat = (uint8_t&) this->gameboy->memory->fetch8(STAT);
     stat = (stat & 0xFC) | static_cast<uint8_t>(currentMode);
 }
 
 
 
 void PPU::checkLYCInterrupt(){
-    uint8_t& stat = (uint8_t&)memory.fetch8(STAT);
-    uint8_t& lyc = (uint8_t&)memory.fetch8(LYC);
+    uint8_t& stat = (uint8_t&) this->gameboy->memory->fetch8(STAT);
+    uint8_t& lyc = (uint8_t&) this->gameboy->memory->fetch8(LYC);
 
     if (lyc == currentLY){
         stat |= 0x04;
         if (stat & 0x40){
-            this->gameboy->CPU->triggerInterrupt(Interrupt::LCDC);
+            this->gameboy->cpu->triggerInterrupt(Interrupt::LCD);
         }
     } else {
         stat &= 0xFB;
     }
     //update STAT register in mem
-    uint8_t& nSTAT = (uint8_t&)memory.fetch8(STAT);
+    uint8_t& nSTAT = (uint8_t&) this->gameboy->memory->fetch8(STAT);
     nSTAT = stat;
 }
 
 //check bit 0 of LCDC to know if the background is enabled
 bool PPU::isBGEnabled() const {
-    uint8_t lcdc = memory.fetch8(LCDC);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
     return lcdc & 0x01;
 }
 
 //check bit 5 of LCDC to know if window is enbled
 bool PPU::isWDEnabled() const {
-    uint8_t lcdc = memory.fetch8(LCDC);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
     return lcdc & 0x20;
 }
 
 //check bit 1 of LCDC to know if sprites are enabled
 bool PPU::areSpritesEnabled() const {
-    uint8_t lcdc = memory.fetch8(LCDC);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
     return lcdc & 0x02;
 }
 
@@ -151,10 +153,10 @@ void PPU::drawSprites() {
 }
 
 void PPU::fetchBackgroundTileData() {
-    uint8_t lcdc = memory.fetch8(LCDC); // LCDC register
-    uint8_t scx = memory.fetch8(SCX);  // Scroll X
-    uint8_t scy = memory.fetch8(SCY);  // Scroll Y
-    uint8_t bgp = memory.fetch8(BGP);  // Background palette
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def); // LCDC register
+    uint8_t scx = this->gameboy->memory->fetch8(SCX);  // Scroll X
+    uint8_t scy = this->gameboy->memory->fetch8(SCY);  // Scroll Y
+    uint8_t bgp = this->gameboy->memory->fetch8(BGP);  // Background palette
 
     // determine quel bg tile map to use (bit 3 of lcdc)    
     uint16_t tileMapBase = (lcdc & 0x08) ? 0x9C00 : 0x9800;
@@ -173,7 +175,7 @@ void PPU::fetchBackgroundTileData() {
 
         //ici on trouve le tile index dans le background tile map
         uint16_t tileAddress = tileMapBase + (tileRow * 32) + tileCol;
-        uint8_t tileIndex = memory.fetch8(tileAddress);
+        uint8_t tileIndex = this->gameboy->memory->fetch8(tileAddress);
 
         // calculer l'address du tile data
         uint16_t tileDataAddress;
@@ -190,8 +192,8 @@ void PPU::fetchBackgroundTileData() {
         uint16_t rowAddress = tileDataAddress + tileY;
 
         // Fetch the two bytes representing the pixel row
-        uint8_t lowByte = memory.fetch8(rowAddress);
-        uint8_t highByte = memory.fetch8(rowAddress + 1);
+        uint8_t lowByte = this->gameboy->memory->fetch8(rowAddress);
+        uint8_t highByte = this->gameboy->memory->fetch8(rowAddress + 1);
 
         // Compute the pixel's color for the current screen X
         int tileX = (x + scx) & 7;
@@ -208,10 +210,10 @@ void PPU::fetchBackgroundTileData() {
 
 
 void PPU::fetchWindowTileData() {
-    uint8_t lcdc = memory.fetch8(LCDC);
-    uint8_t wx = memory.fetch8(WX);
-    uint8_t wy = memory.fetch8(WY);
-    uint8_t bgp = memory.fetch8(BGP);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
+    uint8_t wx = this->gameboy->memory->fetch8(WX);
+    uint8_t wy = this->gameboy->memory->fetch8(WY);
+    uint8_t bgp = this->gameboy->memory->fetch8(BGP);
 
     if (!(lcdc & 0x20) || currentLY < wy || wy>143 || wx < 7 || wx > 166) return;
 
@@ -228,7 +230,7 @@ void PPU::fetchWindowTileData() {
         int tileCol = (windowX / TILE_SIZE) & 0x1F;
 
         uint16_t tileAddress = tileMapBase + (tileRow * 32) + tileCol;
-        uint8_t tileIndex = memory.fetch8(tileAddress);
+        uint8_t tileIndex = this->gameboy->memory->fetch8(tileAddress);
 
         uint16_t tileDataAddress;
         if (tileDataMode) {
@@ -242,8 +244,8 @@ void PPU::fetchWindowTileData() {
 
         uint16_t rowAddress = tileDataAddress + tileY;
 
-        uint8_t lowByte = memory.fetch8(rowAddress);
-        uint8_t highByte = memory.fetch8(rowAddress + 1);
+        uint8_t lowByte = this->gameboy->memory->fetch8(rowAddress);
+        uint8_t highByte = this->gameboy->memory->fetch8(rowAddress + 1);
 
         int tileX = windowX & 7;
         int bit = 7 - tileX;
@@ -259,7 +261,7 @@ void PPU::fetchWindowTileData() {
 
 
 void PPU::fetchSpriteData() {
-    uint8_t lcdc = memory.fetch8(LCDC); 
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def); 
     // check the bit 2 of lcdc to know sprite size
     bool spriteSize = lcdc & 0x04; // sprite size can be 8x8 or 8x16
 
@@ -269,10 +271,10 @@ void PPU::fetchSpriteData() {
 
     //Sprite data is stored in the OAM section of memory which can fit up to 40 sprites.
     for (int i = 0; i < 40 && spritesRendered < SPRITES_PER_LINE_LIMIT; i++) {
-        uint8_t yPos = memory.fetch8(OAM_OFFSET + i * 4) - 16;
-        uint8_t xPos = memory.fetch8(OAM_OFFSET + i * 4 + 1) - 8;
-        uint8_t tileIndex = memory.fetch8(OAM_OFFSET + i * 4 + 2);
-        uint8_t attributes = memory.fetch8(OAM_OFFSET + i * 4 + 3);
+        uint8_t yPos = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4) - 16;
+        uint8_t xPos = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 1) - 8;
+        uint8_t tileIndex = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 2);
+        uint8_t attributes = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 3);
 
         int spriteHeight = spriteSize ? 16 : 8;
 
@@ -288,8 +290,8 @@ void PPU::fetchSpriteData() {
             }
 
             uint16_t tileDataAddress = 0x8000 + (tileIndex * 16) + (tileY * 2);
-            uint8_t lowByte = memory.fetch8(tileDataAddress);
-            uint8_t highByte = memory.fetch8(tileDataAddress + 1);
+            uint8_t lowByte = this->gameboy->memory->fetch8(tileDataAddress);
+            uint8_t highByte = this->gameboy->memory->fetch8(tileDataAddress + 1);
 
             for (int x = 0; x < 8; x++) {
                 int bit = attributes & 0x20 ? x : 7 - x; // Horizontal flip
@@ -297,13 +299,13 @@ void PPU::fetchSpriteData() {
                 uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
                 if (colorIndex == 0) continue; // Transparent
 
-                uint8_t palette = (attributes & 0x10) ? memory.fetch8(OBP1) : memory.fetch8(OBP0);
+                uint8_t palette = (attributes & 0x10) ? this->gameboy->memory->fetch8(OBP1) : this->gameboy->memory->fetch8(OBP0);
                 uint8_t color = (palettte >> (colorIndex * 2)) & 0x03;
 
                 int pixelX = xPos + x;
                 if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
                     if (!(attributes & 0x80) || framebuffer[currentLY][pixelX] == 0) {
-                    framebuffer[currentLY][pixelX] = color;
+                        framebuffer[currentLY][pixelX] = color;
                     }
                 }
             }

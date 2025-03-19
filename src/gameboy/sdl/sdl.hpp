@@ -1,9 +1,11 @@
 #pragma once
 
-#include <SDL2/SDL.h>
 #include <array>
 #include <cstdint>
-#include "ppu.hpp"
+
+#include "SDL.h"
+
+#include "../ppu/ppu.hpp"
 
 class SDLRenderer {
 public:

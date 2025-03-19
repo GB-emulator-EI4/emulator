@@ -10,12 +10,27 @@
 // Forward declaration
 class Gameboy;
 
+// Interruptions
+enum class Interrupt : uint8_t {
+    VBlank = 0x1,
+    LCD = 0x1 << 1,
+    Timer = 0x1 << 2,
+    Serial = 0x1 << 3,
+    Joypad = 0x1 << 4,
+};
+
 class CPU {
     public:
         CPU(Gameboy* gameboy);
         ~CPU();
 
         void cycle(); // Will run a single cycle of the CPU, call in order the following functions: fetch, decode, fetchOperands, executes
+
+        void enableInterrupt(const Interrupt interrupt);
+        void disableInterrupt(const Interrupt interrupt);
+
+        void triggerInterrupt(const Interrupt interrupt);
+        void clearInterrupt(const Interrupt interrupt);
 
     private:
         // Gameboy ref
@@ -99,6 +114,18 @@ class CPU {
         // CALL
         void CALL(const uint16_t &adr);
 
+        // RET
+        void RET();
+
+        // RL
+        void RL(uint8_t &r);
+
+        // POP
+        void POP(uint8_t &r1, uint8_t &r2);
+
+        // RLA
+        void RLA();
+
         /*
         
             Prefixed instructions
@@ -125,18 +152,18 @@ class CPU {
         
         */
 
-        bool getCarry(); // TODO flags functions should be declared as inline
-        bool getHalfCarry();
-        bool getSub();
-        bool getZero(); 
+        inline bool getCarry() const { return (this->f & 0x10) == 0x10; }
+        inline bool getHalfCarry() const { return (this->f & 0x20) == 0x20; }
+        inline bool getSub() const { return (this->f & 0x40) == 0x40; }
+        inline bool getZero() const { return (this->f & 0x80) == 0x80; }
 
-        void setCarry();
-        void setHalfCarry();
-        void setSub();
-        void setZero();
+        inline void setCarry() { this->f |= 0x10; }
+        inline void setHalfCarry() { this->f |= 0x20; }
+        inline void setSub() { this->f |= 0x40; }
+        inline void setZero() { this->f |= 0x80; }
 
-        void resetCarry();
-        void resetHalfCarry();
-        void resetSub();
-        void resetZero();
+        inline void resetCarry() { this->f &= 0xEF; }
+        inline void resetHalfCarry() { this->f &= 0xDF; }
+        inline void resetSub() { this->f &= 0xBF; }
+        inline void resetZero() { this->f &= 0x7F; }
 };
