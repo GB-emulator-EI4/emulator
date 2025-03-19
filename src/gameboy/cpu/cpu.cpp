@@ -1141,8 +1141,8 @@ void CPU::POP(uint8_t &r1, uint8_t &r2) {
     const uint8_t& m2 = (uint8_t&) this->gameboy->memory->fetch8(this->sp);
     this->sp++;
 
-    r1 = m1;
-    r2 = m2;
+    r1 = m2;
+    r2 = m1;
 }
 
 /*
