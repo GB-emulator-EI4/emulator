@@ -41,6 +41,7 @@ class CPU {
 
         // DUMP
         void DUMPR(); // Registers
+        void DUMPFlags(); // Flags
         void DUMPW(); // WRAM, Banked WRAM, HRAM
         void DUMPV(); // VRAM, OAM
 

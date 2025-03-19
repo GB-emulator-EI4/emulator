@@ -19,7 +19,7 @@ void cleanup() {
     delete masterLogger;
 }
 
-// Minisheel, available commands: q (exit), help (show available commands), m (run one M cycle), f (free run), dr (dump registers), ra (run until pc reaches address), rd (read address)
+// Minisheel, available commands: q (exit), help (show available commands), m (run one M cycle), f (free run), dr (dump registers), df (dump flags), ra (run until pc reaches address), rd (read address)
 
 void minishell() {
     string command;
@@ -40,6 +40,9 @@ void minishell() {
         }
         else if(command == "dr") {
             gameboy->cpu->DUMPR();
+        }
+        else if(command == "df") {
+            gameboy->cpu->DUMPFlags();
         }
         else if(command == "ra") {
             uint16_t address;

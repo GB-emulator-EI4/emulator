@@ -610,11 +610,11 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
         const uint8_t& r = this->getArith8Operand(low - (low <= 0x7 ? 0 : 0x8));
         
         if(low <= 0x7) {
-            logger->log("BIT " + to_string((high - 0x4)) + ", r with r: " + intToHex(r));
-            return this->BIT(high - 0x4, r);
+            logger->log("BIT " + to_string(((high * 2) - (0x4 * 2))) + ", r with r: " + intToHex(r));
+            return this->BIT((high * 2) - (0x4 * 2), r);
         } else {
-            logger->log("BIT " + to_string((high - 3)) + ", r with r: " + intToHex(r));
-            return this->BIT(high - 0x3, r);
+            logger->log("BIT " + to_string(((high * 2) - (0x4 * 2) + 1)) + ", r with r: " + intToHex(r));
+            return this->BIT((high * 2) - (0x4 * 2) + 1, r);
         }
     }
     
@@ -1171,6 +1171,12 @@ void CPU::DUMPR() {
     // Dump registers
     logger->log("\033[34mDumping registers\033[0m");
     logger->log("\033[34mA: " + intToHex(this->a) + " F: " + intToHex(this->f) + " B: " + intToHex(this->b) + " C: " + intToHex(this->c) + " D: " + intToHex(this->d) + " E: " + intToHex(this->e) + " H: " + intToHex(this->h) + " L: " + intToHex(this->l) + " SP: " + intToHex(this->sp) + " PC: " + intToHex(this->pc) + "\033[0m");
+}
+
+void CPU::DUMPFlags() {
+    // Dump flags
+    logger->log("\033[34mDumping flags\033[0m");
+    logger->log("\033[34mZ: " + to_string(this->getZero()) + " N: " + to_string(this->getSub()) + " H: " + to_string(this->getHalfCarry()) + " C: " + to_string(this->getCarry()) + "\033[0m");
 }
 
 void CPU::DUMPW() {
