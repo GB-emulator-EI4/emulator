@@ -1,5 +1,10 @@
-#include "sdl.hpp"
 #include <iostream>
+
+
+#include "../ppu/ppu.hpp"
+
+#include <string>
+#include <filesystem>
 
 SDLRenderer::SDLRenderer(int scale)
     : window(nullptr), renderer(nullptr), texture(nullptr), scale(scale), initialized(false) {
@@ -49,10 +54,8 @@ bool SDLRenderer::initialize() {
     return true;
 }
 
-void SDLRenderer::render(const PPU& ppu) {
+void SDLRenderer::render(const FrameBuffer framebuffer) {
     if (!initialized) return;
-
-    const auto& framebuffer = ppu.getFramebuffer();
     
     //temporary buffer
     uint32_t pixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -63,11 +66,10 @@ void SDLRenderer::render(const PPU& ppu) {
             uint8_t colorIndex = framebuffer[y][x];
             SDL_Color color = palette[colorIndex];
 
-            pixelData[y * SCREEN_WIDTH + x] = 
-                (color.r << 24) | (color.g << 16) | (color.b << 8) | color.a;
+            pixelData[y * SCREEN_WIDTH + x] = (color.r << 24) | (color.g << 16) | (color.b << 8) | color.a;
         }
     }
-    
+
     // update texture 
     SDL_UpdateTexture(texture, NULL, pixelData, SCREEN_WIDTH * sizeof(uint32_t));
     

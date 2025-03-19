@@ -9,6 +9,8 @@ using namespace std;
 #include "memory/memory.hpp"
 #include "logging/logger/logger.hpp"
 
+#include "sdl/sdl.hpp"
+
 /*
 
     Get instance
@@ -28,7 +30,7 @@ Gameboy* Gameboy::instance = nullptr;
 
 */
 
-Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), running(true), cyclesCount(0) {
+Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), ppu(new PPU(this)), running(true), cyclesCounter(0), Mcycles(0), Tcycles(0) {
     logger = Logger::getInstance()->getLogger("Gameboy");
     logger->log("Gameboy Constructor");
 }
@@ -36,6 +38,8 @@ Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), running(true), cy
 Gameboy::~Gameboy() {
     delete cpu;
     delete memory;
+    delete ppu;
+
     delete logger;
 
     instance = nullptr;
@@ -52,61 +56,54 @@ Gameboy::~Gameboy() {
 void Gameboy::run() {
     logger->log("Gameboy starting");
 
-    this->dots = 0;
-    while(this->running) {
-        logger->log("---> Gameboy dot cycle");
+    // Reset counters
+    this->cyclesCounter = 0;
+    this->Mcycles = 0;
+    this->Tcycles = 0;
 
-        // LCD cycle
-        this->LCDcycle();
+    while(1) {
+        // Handle SDL events
+        if(!this->renderer->handleEvents()) {
+            this->stop();
+        }
 
-        // PPU cycle
-        // TODO
+        // Do not excute PPU or CPU cycles when on pause
+        if(!this->running) break;
 
-        if(this->dots % 4 == 0) {
+        logger->log("---> Gameboy cycle");
+
+        /*
+        
+            PPU cycle
+        
+        */
+
+        // Check if LCD is enabled
+        if((this->memory->fetch8(0xFF40) & 0x80) >> 7 == 1) {
+            *logger << "PPU cycle, Tcycles: " + to_string(this->Tcycles) + ", Mcycles: " + to_string(this->Mcycles) + ", LY: " + to_string(this->ppu->getCurrentLY());
+            
+            // PPU cycle
+            this->ppu->step();
+
+            // Count cycles
+            this->Tcycles ++;
+            if(this->Tcycles >= 456) this->Tcycles = 0; // Reset cycles
+        } else this->Tcycles = 0; // Reset cycles
+
+        /*
+        
+            CPU cycle
+        
+        */
+    
+        if((this->cyclesCounter %= 4) == 0) {
             // CPU cycle
             this->cpu->cycle();
 
             // Count cycles
-            // if(this->cyclesCount == (3 + 3 * 8191 + 2 + 12 + 3 + 10 + 10)) this->stop();
-            this->cyclesCount ++;
-        }
-        
-        this->dots ++;
-
-        // if(this->cpu->pc == 0xa7) this->stop();
+            this->Mcycles ++;
+        } else this->cyclesCounter ++;
     }
-}
-
-// Temporary function
-void Gameboy::LCDcycle() {
-    // Read LCD enable flag
-    uint8_t& lcdc =(uint8_t&) this->memory->fetch8(0xFF40);
-
-    // Check if LCD is enabled
-    if((lcdc & 0x80) == 0) return;
-
-    // Get and increment LY
-    uint8_t& ly = (uint8_t&) this->memory->fetch8(0xFF44);
-
-    if(this->dots >= 456) {
-        if(ly == 153) {
-            ly = 0;
-
-            this->stop();
-        }
-        else ly ++;
-
-        this->dots = 0;
-    }
-
-    // Log Ly and dots
-    logger->log("LY: " + to_string(ly) + " Dots: " + to_string(this->dots));
-}
-
-void Gameboy::stop() {
-    this->running = false;
-
-    logger->log("Gameboy stopping");
 }
 
 void Gameboy::setBootRom(const string &bootRomPath) {

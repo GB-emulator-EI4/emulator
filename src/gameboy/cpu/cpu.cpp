@@ -665,7 +665,7 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
 
         case 0xFE: { // CP A, n8
             uint8_t value = this->gameboy->memory->fetch8(this->pc + 1);
-            logger->log("CP A, n8 with value " + intToHex(value));
+            logger->log("CP A, n8 with n value " + intToHex(value) + ", A: " + intToHex(this->a));
 
             this->pc += 2;
             return this->CP(this->a, value);
@@ -711,7 +711,7 @@ void CPU::decodeAndExecute(const uint8_t opcode) {
 */
 
 void CPU::decodeAndExecutePrefixed(const uint8_t opcode) {
-    logger->log("CPU Decode and Execute Prefixed");
+    *logger << "Decoding prefixed opcode: " + intToHex(opcode) + ", PC: " + intToHex(this->pc);
 
     uint8_t high = opcode >> 4;
     uint8_t low = opcode & 0xF;
@@ -1309,6 +1309,9 @@ void CPU::disableInterrupt(const Interrupt interrupt) {
 
 void CPU::triggerInterrupt(const Interrupt interrupt) {
     this->gameboy->memory->fetch8(0xFF0F) |= (uint8_t) interrupt;
+
+    *logger << "Triggering interrupt: " + intToHex(interrupt) + ", PC: " + intToHex(this->pc);
+    this->gameboy->pause();
 }
 
 void CPU::clearInterrupt(const Interrupt interrupt) {

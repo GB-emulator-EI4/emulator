@@ -10,7 +10,7 @@
 // Forward declaration
 class Gameboy;
 
-// Interruptions
+// Interrupts
 enum class Interrupt : uint8_t {
     VBlank = 0x1,
     LCD = 0x1 << 1,

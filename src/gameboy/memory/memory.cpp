@@ -94,12 +94,10 @@ char& Memory::fetch8(const uint16_t &address) {
         // Log warning if reading interrupts infos
         if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
 
-        // Warning if reading LCD status
-        else if(address >= 0xFF40 && address <= 0xFF45) {
-            // logger->warning("Warning: Reading LCD infos at address " + intToHex(address));
-        }
+        // Log if reading LCD status
+        else if(address >= 0xFF40 && address <= 0xFF45) logger->log("Warning: Reading LCD infos at address " + intToHex(address));
         
-        // Log warining if accessing the IO
+        // Log warning if accessing other IOs
         else logger->warning("Warning: Accessing IO at address " + intToHex(address));
 
         return this->io[address - IO_OFFSET];

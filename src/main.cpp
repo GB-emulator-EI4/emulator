@@ -5,24 +5,46 @@ using namespace std;
 #include "constants/constants.hpp"
 
 #include "gameboy/gameboy.hpp"
-#include "gameboy/logging/logger/logger.hpp"
+
+Gameboy* gameboy = nullptr;
+SDLRenderer* sdl = nullptr;
+Log* logger = nullptr;
+Logger* masterLogger = nullptr;
+
+void cleanup() {
+    delete gameboy;
+    delete sdl;
+    
+    delete logger;
+    delete masterLogger;
+}
 
 int main() {
     // Init logger
-    Logger* masterLogger = Logger::getInstance();
+    masterLogger = Logger::getInstance();
 
     // Available levels: LOG_LOG, LOG_ERROR
     // Available domains: Main, Gameboy, CPU, Memory, PPU
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {"Gameboy", "CPU", "PPU", "Memory"}, {"Constructor", "Destructor", "CPU Fetch", "Decoding"});
+    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {"CPU", "PPU"}, {"Constructor", "Destructor", "CPU Fetch", "Decoding opcode", "CPU Cycle"});
 
     // Get logger for main
-    Log* logger = masterLogger->getLogger("Main");
+    logger = masterLogger->getLogger("Main");
 
     // Log
-    logger->log("Logger configured, initializing Gameboy");
+    *logger << "Logger configured, initializing Gameboy";
+
+    // Init SDL
+    sdl = new SDLRenderer(2);
+    if(!sdl->initialize()) {
+        *logger << "SDL initialization failed, exiting";
+
+        cleanup();
+        return -1;
+    }
 
     // Get instance (will init the Gameboy)
-    Gameboy* gameboy = Gameboy::getInstance();
+    gameboy = Gameboy::getInstance();
+    gameboy->setRenderer(sdl);
     
     // Load ROMs
     logger->log("Set BOOT ROM");
@@ -36,11 +58,11 @@ int main() {
     logger->log("Running emulator");
     gameboy->run();
 
+    // Clean SDL
+    sdl->cleanup();
+
     // Free everything
-    delete gameboy;
-    
-    delete logger;
-    delete masterLogger;
+    cleanup();
 
     return 0;
 }
