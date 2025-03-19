@@ -9,7 +9,7 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 144
 
-#define LCDC 0xFF40
+#define LCDC_def 0xFF40 // TODO change name as it overlaps with Interrupt::LCDC
 
 #define SCY 0xFF42
 #define SCX 0xFF43
@@ -29,7 +29,7 @@
 
 class PPU {
 public:
-    PPU(Memory& memory);
+    PPU(Gameboy* gameboy);
     ~PPU();
 
     //// Advances the PPU by one cycle
@@ -59,9 +59,7 @@ public:
     const std::array<std::array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT>& getFramebuffer() const;
 
 private:
-    Memory& memory;  // Pass memory reference for accessing VRAM & OAM
-
-
+    Gameboy* gameboy;
 
     // PPU internal state
     int cycleCounter; // Tracks cycles within a scanline
@@ -75,8 +73,8 @@ private:
     void fetchBackgroundTileData();
     void fetchWindowTileData();
     void fetchSpriteData();
-       
-  
+    
+
     uint8_t getColor(uint8_t palette, uint8_t colorID);
 
     void checkLYCInterrupt();
