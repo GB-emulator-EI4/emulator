@@ -26,7 +26,7 @@ class CPU {
 
         void cycle(); // Will run a single cycle of the CPU, call in order the following functions: fetch, decode, fetchOperands, executes
 
-        void enableInterrupt(const Interrupt interrupt);
+        void enableInterrupt(const Interrupt interrupt); 
         void disableInterrupt(const Interrupt interrupt);
 
         void triggerInterrupt(const Interrupt interrupt);
@@ -44,13 +44,13 @@ class CPU {
         uint16_t sp, pc; // 16-bit registers
 
         // Execution steps
-        uint8_t fetch(); // Fetch the next instruction
-        void decodeAndExecute(const uint8_t opcode);
-        void decodeAndExecutePrefixed(const uint8_t opcode);
+        const uint8_t& fetch() const; // Fetch the next instruction
+        void decodeAndExecute(const uint8_t& opcode);
+        void decodeAndExecutePrefixed(const uint8_t& opcode);
 
         // Operand fetchers
-        const uint8_t& getArith8Operand(const uint8_t opcode);
-        uint8_t& getIncDec8Operand(const uint8_t opcode);
+        uint8_t& getArith8Operand(const uint8_t& opcode);
+        uint8_t& getIncDec8Operand(const uint8_t& opcode);
 
         /*
         
@@ -59,8 +59,8 @@ class CPU {
         */
 
         // JUMP
-        bool JRN(int8_t& e8, const uint8_t& flag); // 0x20, 0x30
-        bool JRS(int8_t& e8, const uint8_t& flag); // 0x18, 0x28
+        const bool JRN(const int8_t& e8, const uint8_t& flag); // 0x20, 0x30
+        const bool JRS(const int8_t& e8, const uint8_t& flag); // 0x18, 0x28
 
         // LD
         void LD(uint8_t& r1, const uint8_t& r2);
@@ -77,7 +77,7 @@ class CPU {
         void SUBC(uint8_t &r1, const uint8_t &r2);
 
         // CP
-        void CP(uint8_t &r1, const uint8_t &r2);
+        void CP(const uint8_t &r1, const uint8_t &r2);
 
         // INC
         void INC(uint8_t &r1);

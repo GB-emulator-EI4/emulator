@@ -193,7 +193,6 @@ void PPU::fetchBackgroundTileData() {
 
         if(color != 0) {
             *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
-            this->gameboy->stop();
         }
     }
 }
@@ -247,7 +246,6 @@ void PPU::fetchWindowTileData() {
 
         if(color != 0) {
             *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
-            this->gameboy->stop();
         }
     }
 
@@ -304,7 +302,6 @@ void PPU::fetchSpriteData() {
 
                         if(color != 0) {
                             *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
-                            this->gameboy->stop();
                         }
                     }
                 }
