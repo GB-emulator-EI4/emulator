@@ -1,11 +1,7 @@
 CC = g++
 
 CFLAGS = -Wall -Wextra -pedantic
-
-
-CFLAGS = -Wall -Wextra -pedantic $(shell sdl2-config --cflags)
-LDFLAGS = $(shell sdl2-config --libs)
-
+LDFLAGS = -lSDL2 -lm
 
 SOURCES := $(shell find . -name "*.cpp")
 OBJS = ${SOURCES:.cpp=.o}
@@ -26,4 +22,4 @@ run: ${OUTPUT_DIR}/${OUTPUT}
 
 clean:
 	@find . -type f -name '*.o' -exec rm {} +
-	@rm -f ./${OUTPUT_DIR}/${OUTPUT}
+	@rm -f ./${OUTPUT_DIR}/${OUTPUT}yum search SDL2-devel
