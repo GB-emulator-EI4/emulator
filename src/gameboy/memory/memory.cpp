@@ -90,20 +90,7 @@ char& Memory::fetch8(const uint16_t &address) {
     if(address >= OAM_OFFSET && address < OAM_OFFSET + OAM_SIZE) return this->oam[address - OAM_OFFSET];
 
     // Check if the address is in the IO
-    if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) {
-        // Log warning if reading interrupts infos
-        if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
-
-        // Warning if reading LCD status
-        else if(address >= 0xFF40 && address <= 0xFF45) {
-            // logger->warning("Warning: Reading LCD infos at address " + intToHex(address));
-        }
-        
-        // Log warining if accessing the IO
-        else logger->warning("Warning: Accessing IO at address " + intToHex(address));
-
-        return this->io[address - IO_OFFSET];
-    }
+    if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) return this->fetchIOs(address);
 
     // Check if the address is in the HRAM
     if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) {
@@ -116,4 +103,19 @@ char& Memory::fetch8(const uint16_t &address) {
     // If the address is not in any of the memory blocks, throw an error
     logger->error("Error: Invalid memory address, reading at address " + intToHex(address));
     exit(1);
+}
+
+char& Memory::fetchIOs(const uint16_t &address) {
+    // TODO add better filter and log / warning for IOs reading, seprate log for controller, timers, lcd ...
+
+    // Log warning if reading interrupts infos
+    if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+
+    // Log if reading LCD status
+    else if(address >= 0xFF40 && address <= 0xFF45) logger->log("Warning: Reading LCD infos at address " + intToHex(address));
+    
+    // Log warning if accessing other IOs
+    else logger->warning("Warning: Accessing IO at address " + intToHex(address));
+
+    return this->io[address - IO_OFFSET];
 }
