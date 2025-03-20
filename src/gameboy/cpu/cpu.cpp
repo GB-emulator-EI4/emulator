@@ -108,10 +108,10 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             case 0x7: {
                 if(low <= 0x7) { // LD [HL] r
-                    uint16_t adress = (this->h << 8) + this->l;
+                    uint16_t address = (this->h << 8) + this->l;
 
-                    logger->log("LD [HL] r with r: " + intToHex(r2) + ", at adress: " + intToHex(adress));
-                    return this->LD((uint8_t&) this->gameboy->memory->fetch8(adress), r2);
+                    logger->log("LD [HL] r with r: " + intToHex(r2) + ", at address: " + intToHex(address));
+                    return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), r2);
                 } else { // LD A r
                     logger->log("LD A r with r: " + intToHex(r2));
                     return this->LD(this->a, r2);
@@ -429,12 +429,12 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xCD: { // CALL n16
             const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
-            const uint16_t adress = ((uint16_t) adr_msb << 8) + adr_lsb;
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
 
-            logger->log("CALL n16 with adress " + intToHex(adress));
+            logger->log("CALL n16 with address " + intToHex(address));
 
             this->pc += 3;
-            return this->CALL(adress);
+            return this->CALL(address);
         } break;
 
         case 0xCE: { // ADC A, n8
@@ -502,12 +502,12 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xEA: { // LD [adr], A
             const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
-            const uint16_t adress = ((uint16_t) adr_msb << 8) + adr_lsb;
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
 
-            logger->log("LD [adr], A with adress " + intToHex(adress));
+            logger->log("LD [adr], A with address " + intToHex(address));
 
             this->pc += 3;
-            return this->LD((uint8_t&) this->gameboy->memory->fetch8(adress), this->a);
+            return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), this->a);
         } break;
 
         case 0xEE: { // XOR A, n8
@@ -548,12 +548,12 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xFA: { // LD A [adr]
             const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
-            const uint16_t adress = ((uint16_t) adr_msb << 8) + adr_lsb;
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
 
-            logger->log("LD A, [adr] with adress " + intToHex(adress));
+            logger->log("LD A, [adr] with address " + intToHex(address));
 
             this->pc += 3;
-            return this->LD(this->a, this->gameboy->memory->fetch8(adress));
+            return this->LD(this->a, this->gameboy->memory->fetch8(address));
         } break;
 
         case 0xFE: { // CP A, n8
@@ -581,10 +581,10 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
                 const uint8_t& r2 = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
                 const uint8_t& r3 = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
 
-                const uint16_t adress = ((uint16_t) r2 << 8) + r3;
+                const uint16_t address = ((uint16_t) r2 << 8) + r3;
 
                 this->pc += 3;
-                return logger->log("\033[34mAdress: " + intToHex(adress) + " Value: " + intToHex((uint8_t&) this->gameboy->memory->fetch8(adress)) + "\033[0m");
+                return logger->log("\033[34mAddress: " + intToHex(address) + " Value: " + intToHex((uint8_t&) this->gameboy->memory->fetch8(address)) + "\033[0m");
             }
         } break;
     }
@@ -628,7 +628,7 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
         }
     }
 
-    logger->error("Unknown prefiexed opcode: " + intToHex(opcode));
+    logger->error("Unknown prefixed opcode: " + intToHex(opcode));
     this->gameboy->stop();
 }
 
@@ -648,8 +648,8 @@ uint8_t& CPU::getArith8Operand(const uint8_t& opcode) {
         case 0x5: return this->l;
 
         case 0x6: {
-            const uint16_t adress = ((uint16_t) this->h << 8) + this->l;
-            return (uint8_t&) this->gameboy->memory->fetch8(adress);
+            const uint16_t address = ((uint16_t) this->h << 8) + this->l;
+            return (uint8_t&) this->gameboy->memory->fetch8(address);
         }
 
         case 0x7: return this->a;
@@ -676,8 +676,8 @@ uint8_t& CPU::getIncDec8Operand(const uint8_t& opcode) {
         case 0x2: return this->h;
 
         case 0x3: {
-            const uint16_t adress = ((uint16_t) this->h << 8) + this->l;
-            return (uint8_t&) this->gameboy->memory->fetch8(adress);
+            const uint16_t address = ((uint16_t) this->h << 8) + this->l;
+            return (uint8_t&) this->gameboy->memory->fetch8(address);
         }
 
         case 0x4: return this->c;
@@ -723,6 +723,18 @@ bool CPU::JRS(const int8_t& e8, const uint8_t& flag) { // 0x18, 0x28 -> jump to 
 void CPU::LD(uint8_t &r1, const uint8_t &r2) {
     r1 = r2;
 }
+
+/*
+
+LDH A, [FF00 + n8]
+
+*/
+
+// void CPU::LDH(uint8_t &r1, const uint8_t &r2) {
+//     r1 = this->gameboy->memory->fetch8(0xFF00 + r2);
+// }
+
+
 
 /*
 
@@ -1180,17 +1192,25 @@ void CPU::DUMPFlags() {
 }
 
 void CPU::DUMPW() {
-    // Dump work RAM
-    logger->log("Dumping work RAM");
-
-    // TODO
+    logger->log("\033[36Dumping work RAM\033[0m"); // work ram contained between 0xC000 and 0xDFFF dc iterate over these lines to display their content
+    for (uint16_t addr = 0xC000; addr <= 0xDFFF; addr += 16) {
+        std::string line = intToHex(addr) + ": ";
+        for (uint8_t i = 0; i < 16; i++) {
+            line += intToHex(this->gameboy->memory->fetch8(addr + i)) + " ";
+        }
+        logger->log("\033[36" + line + "\033[0m");
+    }
 }
 
-void CPU::DUMPV() {
-    // Dump video RAM
-    logger->log("Dumping video RAM");
-
-    // TODO
+void CPU::DUMPV() { // vram stored b/w 0x8000 and 0x9FFF
+    logger->log("\033[96Dumping video RAM\033[0m");
+    for (uint16_t addr = 0x8000; addr <= 0x9FFF; addr += 16) {
+        std::string line = intToHex(addr) + ": ";
+        for (uint8_t i = 0; i < 16; i++) {
+            line += intToHex(this->gameboy->memory->fetch8(addr + i)) + " ";
+        }
+        logger->log("\033[96" + line + "\033[0m");
+    }
 }
 
 /*
