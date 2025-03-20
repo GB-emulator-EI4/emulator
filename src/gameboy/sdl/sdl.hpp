@@ -45,10 +45,10 @@ private:
     // Color 2: dark
     // Color 3: black
     SDL_Color palette[4] = {
-        {224, 248, 208, 255},  
-        {136, 192, 112, 255},  
-        {52, 104, 86, 255},  
-        {8, 24, 32, 255}      
+        {255, 255, 255, 255},  
+        {192, 192, 192, 255},  
+        {96, 96, 96, 255},     
+        {0, 0, 0, 255}         
     };
 
     // flag to track if initialization was successful
