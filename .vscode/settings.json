@@ -52,7 +52,11 @@
         "variant": "cpp",
         "filesystem": "cpp",
         "iomanip": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "codecvt": "cpp",
+        "cstdarg": "cpp",
+        "sstream": "cpp",
+        "cinttypes": "cpp"
     },
 
     "files.exclude": {

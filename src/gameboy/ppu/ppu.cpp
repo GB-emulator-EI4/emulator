@@ -1,16 +1,10 @@
 #include <iostream>
-#include "ppu.hpp"
-#include "../memory/memory.hpp"
-#include "../cpu/cpu.hpp" //pour les interrupts (?)
-
 
 using namespace std;
 
+#include "ppu.hpp"
 
-
-PPU::PPU(Gameboy* gameboy) : gameboy(gameboy), cycleCounter(0), currentLY(0) {
-    // TODO set current mode default value
-
+PPU::PPU(Gameboy* gameboy) : gameboy(gameboy), logger(Logger::getInstance()->getLogger("PPU")), currentLY(0), currentMode(Mode::OAMSearch) {
     // Initialize framebuffer
     for (auto& row : framebuffer) {
         row.fill(0);
@@ -21,21 +15,13 @@ PPU::~PPU() {
     // Destructor
 }
 
-PPU::Mode PPU::getMode() const {
-    return currentMode;
-}
-
-const std::array<std::array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT>& PPU::getFramebuffer() const {
-    return framebuffer;
-}
-
-
 void PPU::step(){
-    cycleCounter++;
+    *logger << "PPU Step, LY: " + to_string(currentLY) + ", Dots: " + to_string(this->gameboy->Tcycles);
 
-    if (cycleCounter >= 456){
-        cycleCounter = 0;
-        currentLY++;
+    if (this->gameboy->Tcycles == 455) {
+        *logger << "End of Hblank, LY: " + to_string(currentLY);
+
+        currentLY ++;
 
         //update LY register in mem
         uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
@@ -45,25 +31,26 @@ void PPU::step(){
 
         if (currentLY == 144) { //on est a la fin de la visible scanline
             currentMode = Mode::VBlank;
-            this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank); //enom interrupt avec VBlank = 0 par exemple
-        } 
-        else if (currentLY > 153) { //on est a la fin de la vblank
+        } else if (currentLY > 153) { //on est a la fin de la vblank
             currentLY = 0;
             //update LY register in mem
             uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
             nLY = currentLY;
             currentMode = Mode::OAMSearch;
+
+            // Inform the gameboy that the image is ready to be displayed
+            this->gameboy->renderer->render(framebuffer);
         }
     }
 
     switch(currentMode){
         case Mode::OAMSearch:
-            if (cycleCounter >= 80){
+            if (this->gameboy->Tcycles >= 80){
                 currentMode = Mode::Drawing;
             }
             break;
         case Mode::Drawing:
-            if (cycleCounter >= 252){
+            if (this->gameboy->Tcycles >= 252){
                 currentMode = Mode::HBlank;
                 renderScanline();
             }
@@ -83,9 +70,7 @@ void PPU::step(){
     stat = (stat & 0xFC) | static_cast<uint8_t>(currentMode);
 }
 
-
-
-void PPU::checkLYCInterrupt(){
+void PPU::checkLYCInterrupt() {
     uint8_t& stat = (uint8_t&) this->gameboy->memory->fetch8(STAT);
     uint8_t& lyc = (uint8_t&) this->gameboy->memory->fetch8(LYC);
 
@@ -104,19 +89,19 @@ void PPU::checkLYCInterrupt(){
 
 //check bit 0 of LCDC to know if the background is enabled
 bool PPU::isBGEnabled() const {
-    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     return lcdc & 0x01;
 }
 
 //check bit 5 of LCDC to know if window is enbled
 bool PPU::isWDEnabled() const {
-    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     return lcdc & 0x20;
 }
 
 //check bit 1 of LCDC to know if sprites are enabled
 bool PPU::areSpritesEnabled() const {
-    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     return lcdc & 0x02;
 }
 
@@ -153,7 +138,7 @@ void PPU::drawSprites() {
 }
 
 void PPU::fetchBackgroundTileData() {
-    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def); // LCDC register
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC); // LCDC register
     uint8_t scx = this->gameboy->memory->fetch8(SCX);  // Scroll X
     uint8_t scy = this->gameboy->memory->fetch8(SCY);  // Scroll Y
     uint8_t bgp = this->gameboy->memory->fetch8(BGP);  // Background palette
@@ -205,12 +190,16 @@ void PPU::fetchBackgroundTileData() {
 
         // Store the pixel in the framebuffer
         framebuffer[currentLY][x] = color;
+
+        if(color != 0) {
+            *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
+        }
     }
 }
 
 
 void PPU::fetchWindowTileData() {
-    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def);
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     uint8_t wx = this->gameboy->memory->fetch8(WX);
     uint8_t wy = this->gameboy->memory->fetch8(WY);
     uint8_t bgp = this->gameboy->memory->fetch8(BGP);
@@ -240,7 +229,7 @@ void PPU::fetchWindowTileData() {
             tileDataAddress = 0x9000 + (signedTileIndex * 16);
         }
 
-        int tileY = 2 * ((LY - wy) & 7);
+        int tileY = 2 * ((currentLY - wy) & 7);
 
         uint16_t rowAddress = tileDataAddress + tileY;
 
@@ -254,6 +243,10 @@ void PPU::fetchWindowTileData() {
         uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
 
         framebuffer[currentLY][x] = color;
+
+        if(color != 0) {
+            *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
+        }
     }
 
 }
@@ -261,7 +254,7 @@ void PPU::fetchWindowTileData() {
 
 
 void PPU::fetchSpriteData() {
-    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC_def); 
+    uint8_t lcdc = this->gameboy->memory->fetch8(LCDC); 
     // check the bit 2 of lcdc to know sprite size
     bool spriteSize = lcdc & 0x04; // sprite size can be 8x8 or 8x16
 
@@ -306,6 +299,10 @@ void PPU::fetchSpriteData() {
                 if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
                     if (!(attributes & 0x80) || framebuffer[currentLY][pixelX] == 0) {
                         framebuffer[currentLY][pixelX] = color;
+
+                        if(color != 0) {
+                            *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
+                        }
                     }
                 }
             }

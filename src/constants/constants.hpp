@@ -17,7 +17,7 @@
 
 */
 
-// #define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
+#define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
 
 /*
 
@@ -38,4 +38,4 @@
 
 // LDH
 // #define ROM_PATH "roms/tests/homemade/LDH/LDH r (r).bin" // OK
-#define ROM_PATH "roms/tests/homemade/LDH/LDH (r) r.bin"
+// #define ROM_PATH "roms/tests/homemade/LDH/LDH (r) r.bin"
