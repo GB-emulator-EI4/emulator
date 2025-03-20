@@ -86,6 +86,30 @@ void PPU::checkLYCInterrupt() {
     uint8_t& nSTAT = (uint8_t&) this->gameboy->memory->fetch8(STAT);
     nSTAT = stat;
 }
+void PPU::checkSTATInterrupts() {
+    uint8_t stat = this->gameboy->memory->fetch8(STAT);
+    bool interruptTriggered = false;
+    
+    if ((stat & 0x08) && currentMode == Mode::HBlank) {
+        interruptTriggered = true;
+    }
+    
+    if ((stat & 0x10) && currentMode == Mode::VBlank) {
+        interruptTriggered = true;
+    }
+    
+    if ((stat & 0x20) && currentMode == Mode::OAMSearch) {
+        interruptTriggered = true;
+    }
+
+    if ((stat & 0x40) && (stat & 0x04)) {
+        interruptTriggered = true;
+    }
+    
+    if (interruptTriggered) {
+        this->gameboy->cpu->triggerInterrupt(Interrupt::LCD);
+    }
+}
 
 //check bit 0 of LCDC to know if the background is enabled
 bool PPU::isBGEnabled() const {
