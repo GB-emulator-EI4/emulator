@@ -15,57 +15,73 @@ PPU::~PPU() {
     // Destructor
 }
 
-void PPU::step(){
-    *logger << "PPU Step, LY: " + to_string(currentLY) + ", Dots: " + to_string(this->gameboy->Tcycles);
-
-    if (this->gameboy->Tcycles == 455) {
-        *logger << "End of Hblank, LY: " + to_string(currentLY);
-
-        currentLY ++;
-
-        //update LY register in mem
-        uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
-        nLY = currentLY;
-
-        checkLYCInterrupt();
-
-        if (currentLY == 144) { //on est a la fin de la visible scanline
-            currentMode = Mode::VBlank;
-        } else if (currentLY > 153) { //on est a la fin de la vblank
-            currentLY = 0;
-            //update LY register in mem
-            uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
-            nLY = currentLY;
-            currentMode = Mode::OAMSearch;
-
-            // Inform the gameboy that the image is ready to be displayed
-            this->gameboy->renderer->render(framebuffer);
-        }
-    }
-
-    switch(currentMode){
+void PPU::step() {
+    //handle mode transitions based on current T-cycle
+    switch (currentMode) {
         case Mode::OAMSearch:
-            if (this->gameboy->Tcycles >= 80){
+            if (this->gameboy->Tcycles == 0) {
+                // OAM Search mode
+                checkSTATInterrupts(); 
+            }
+            
+            if (this->gameboy->Tcycles >= 80) {
                 currentMode = Mode::Drawing;
             }
             break;
+            
         case Mode::Drawing:
-            if (this->gameboy->Tcycles >= 252){
+            if (this->gameboy->Tcycles >= 252) {
                 currentMode = Mode::HBlank;
-                renderScanline();
+                renderScanline(); 
+                
+                uint8_t& stat = (uint8_t&) this->gameboy->memory->fetch8(STAT);
+                stat = (stat & 0xFC) | static_cast<uint8_t>(currentMode);
+                
+                checkSTATInterrupts();
             }
             break;
+            
         case Mode::HBlank:
-            if (this->gameboy->memory->fetch8(STAT) & 0x08){
-                // this->gameboy->cpu->triggerInterrupt(Interrupt::HBlank); // TODO is there a HBlank interrupt?
-            }
+            //changes handled at T-cycle 456/0
             break;
+            
         case Mode::VBlank:
-            if (this->gameboy->memory->fetch8(STAT) & 0x10){
+            if (this->gameboy->Tcycles == 0 && currentLY == 144) {
+                //entered VBlank
                 this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
+                checkSTATInterrupts();
             }
             break;
     }
+    
+    if (this->gameboy->Tcycles == 455) {
+        currentLY++;
+        uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
+        nLY = currentLY;
+        
+        checkLYCInterrupt();
+        
+        if (currentLY == 144) {
+            // Prepare for VBlank
+        } else if (currentLY > 153) {
+            currentLY = 0;
+            nLY = currentLY;
+        }
+    } else if (this->gameboy->Tcycles == 0) {
+        if (currentLY == 144) {
+            currentMode = Mode::VBlank;
+        } else if (currentLY == 0 || currentLY < 144) {
+            currentMode = Mode::OAMSearch;
+            checkSTATInterrupts(); 
+        }
+        
+        
+        if (currentLY == 0) {
+            this->gameboy->renderer->render(framebuffer);
+        }
+    }
+    
+    //update STAT register in mem
     uint8_t& stat = (uint8_t&) this->gameboy->memory->fetch8(STAT);
     stat = (stat & 0xFC) | static_cast<uint8_t>(currentMode);
 }
@@ -86,6 +102,8 @@ void PPU::checkLYCInterrupt() {
     uint8_t& nSTAT = (uint8_t&) this->gameboy->memory->fetch8(STAT);
     nSTAT = stat;
 }
+
+
 void PPU::checkSTATInterrupts() {
     uint8_t stat = this->gameboy->memory->fetch8(STAT);
     bool interruptTriggered = false;
