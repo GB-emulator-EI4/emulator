@@ -56,7 +56,9 @@
         "codecvt": "cpp",
         "cstdarg": "cpp",
         "sstream": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "text_encoding": "cpp",
+        "bitset": "cpp"
     },
 
     "files.exclude": {
