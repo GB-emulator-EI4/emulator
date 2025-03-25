@@ -52,3 +52,11 @@
 #define SCREEN_HEIGHT 144
 
 #define SCREEN_SCALE 5
+
+/*
+
+    Logging
+
+*/
+
+#define ENABLE_LOGGING false

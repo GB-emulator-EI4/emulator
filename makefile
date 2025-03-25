@@ -1,6 +1,6 @@
 CC = g++
 
-CFLAGS = -Wall -Wextra -pedantic -g -fno-omit-frame-pointer -O2
+CFLAGS = -Wall -Wextra -pedantic -g -fno-omit-frame-pointer -O3
 LDFLAGS = -lSDL2 -lm
 
 SOURCES := $(shell find . -name "*.cpp")

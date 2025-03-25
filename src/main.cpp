@@ -58,9 +58,9 @@ int main() {
     masterLogger = Logger::getInstance();
 
     // Available levels: LOG_LOG, LOG_ERROR, LOG_WARNING
-    // Available domains: Main, Gameboy, CPU, Memory, PPU
+    // Available domains: "Main", "Gameboy", "CPU", "Memory", "PPU"
     // Filters: "CPU Fetch", "Decoding opcode", "CPU Cycle"
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {"Main", "Gameboy", "CPU", "Memory", "PPU"}, {"Constructor", "Destructor", "LCD infos"});
+    masterLogger->setConfig({LOG_LOG, LOG_ERROR, LOG_WARNING}, {}, {"Constructor", "Destructor", "LCD infos"});
 
     // Get logger for main
     logger = masterLogger->getLogger("Main");
