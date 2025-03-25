@@ -6,7 +6,6 @@
 using namespace std;
 
 class Log;
-#include "../log/log.hpp"
 
 #define LOG_LOG 1
 #define LOG_ERROR 2
@@ -44,3 +43,5 @@ class Logger {
     protected:
 
 };
+
+#include "../log/log.hpp"

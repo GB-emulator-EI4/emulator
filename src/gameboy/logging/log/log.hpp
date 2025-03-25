@@ -4,7 +4,6 @@
 
 using namespace std;
 
-class Logger;
 #include "../logger/logger.hpp"
 
 class Log {
@@ -23,17 +22,17 @@ class Log {
         ~Log();
 
         // Functions
-        void log(const string &message);
-        void error(const string &message);
-        void warning(const string &message);
+        inline void log(const string &message) { this->logger->log(LOG_LOG, domain, message); }
+        inline void error(const string &message) { this->logger->log(LOG_ERROR, domain, message); }
+        inline void warning(const string &message) { this->logger->log(LOG_WARNING, domain, message); }
 
         // Operator overloads for normal
-        Log& operator << (const string &message) {
+        inline Log& operator << (const string &message) {
             this->log(message);
             return *this;
         }
 
-        Log& operator >> (const string &message) {
+        inline Log& operator >> (const string &message) {
             this->error(message);
             return *this;
         }

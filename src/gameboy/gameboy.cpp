@@ -18,8 +18,8 @@ using namespace std;
 */
 
 Gameboy* Gameboy::getInstance() {
-    if (!instance) instance = new Gameboy();
-    return instance;
+    if(!Gameboy::instance) Gameboy::instance = new Gameboy();
+    return Gameboy::instance;
 }
 
 Gameboy* Gameboy::instance = nullptr;
@@ -36,15 +36,14 @@ Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), ppu(new PPU(this)
 }
 
 Gameboy::~Gameboy() {
+    logger->log("Gameboy Destructor");
+
+    Gameboy::instance = nullptr;
+
     delete cpu;
     delete memory;
     delete ppu;
-
     delete logger;
-
-    instance = nullptr;
-
-    logger->log("Gameboy Destructor");
 }
 
 /*
@@ -57,14 +56,19 @@ void Gameboy::init() {
     logger->log("Gameboy initializing");
 
     // Reset counters
-    this->cyclesCounter = 0;
     this->Mcycles = 0;
     this->Tcycles = 0;
+
+    // Set vars
+    this->running = true;
 }
 
 void Gameboy::runMcycle() {
     // Run one M - cycle
-    logger->log("---> Gameboy cycle");
+    logger->log("---> Gameboy run M cycle");
+
+    // Handle SDL events
+    this->renderer->handleEvents();
 
     this->cyclesCounter = 0;
     while(this->cyclesCounter < 4) {
@@ -74,8 +78,12 @@ void Gameboy::runMcycle() {
         
         */
 
+        // Get LCD status var
+        const uint8_t lcdControl = this->memory->fetch8(0xFF40);
+        const uint8_t isEnable = (lcdControl & 0x80) >> 7;
+
         // Check if LCD is enabled
-        if((this->memory->fetch8(0xFF40) & 0x80) >> 7 == 1) {
+        if(isEnable == 1) {
             *logger << "PPU cycle, Tcycles: " + to_string(this->Tcycles) + ", Mcycles: " + to_string(this->Mcycles) + ", LY: " + to_string(this->ppu->getCurrentLY());
             
             // PPU cycle
@@ -88,7 +96,7 @@ void Gameboy::runMcycle() {
 
         /*
         
-            CPU conditinnal M cycle
+            CPU M cycle, one every 4 PPU T cycles
         
         */
     
@@ -107,12 +115,8 @@ void Gameboy::runMcycle() {
 void Gameboy::freeRun() {
     logger->log("Gameboy starting");
 
+    this->running = true;
     while(1) {
-        // Handle SDL events
-        if(!this->renderer->handleEvents()) {
-            this->stop();
-        }
-
         // Do not excute PPU or CPU cycles when on pause
         if(!this->running) break;
 
