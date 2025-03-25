@@ -103,4 +103,6 @@ class Memory {
         char io[IO_SIZE]; // 128B
 
         char hram[HRAM_SIZE]; // 128B
+
+        char& fetchIOs(const uint16_t &address); // Fetch 8-bit value from IO memory
 };
