@@ -82,9 +82,10 @@ private:
     void fetchWindowTileData();
     void fetchSpriteData();
 
-    uint8_t getColor(uint8_t palette, uint8_t colorID);
+    
 
     void checkLYCInterrupt();
+    void checkSTATInterrupts();
 
     //enable methods
     bool isBGEnabled() const;

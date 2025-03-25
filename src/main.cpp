@@ -71,7 +71,7 @@ int main() {
 
     // Available levels: LOG_LOG, LOG_ERROR
     // Available domains: Main, Gameboy, CPU, Memory, PPU
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {"Main", "Gameboy", "Memory", "CPU", "PPU"}, {"Constructor", "Destructor", "CPU Fetch", "Decoding opcode", "CPU Cycle", "LCD infos"});
+    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {}, {"Constructor", "Destructor", "CPU Fetch", "Decoding opcode", "CPU Cycle", "LCD infos"});
 
     // Get logger for main
     logger = masterLogger->getLogger("Main");
