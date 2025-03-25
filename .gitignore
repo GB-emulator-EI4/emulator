@@ -1,3 +1,5 @@
 *.o
 
 dist
+out.folded
+perf.data
