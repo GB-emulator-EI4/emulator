@@ -5,52 +5,48 @@
 
 #include "SDL2/SDL.h"
 
-#include "../ppu/ppu.hpp"
+#include "../gameboy.hpp"
 
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 144
+#include "../../constants/constants.hpp"
 
 typedef array<array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT> FrameBuffer; // Define a type for the framebuffer
 
 class SDLRenderer {
-public:
+    public:
+        SDLRenderer();
+        ~SDLRenderer();
 
-    SDLRenderer(int scale = 2);
-    ~SDLRenderer();
+        // Initialize SDL
+        bool initialize();
 
-   //init sdl adn create window
-    bool initialize();
+        // Render framebuffer (from ppu)
+        void render(const FrameBuffer &framebuffer);
 
-    // render framebuffer (from ppu)
-    void render(const FrameBuffer framebuffer);
+        // SDL events
+        void handleEvents();
 
-    // SDL events
-    bool handleEvents();
+        // Clean up
+        void cleanup();
 
-    // clean up
-    void cleanup();
+    private:
+        // Gameboy instance
+        Gameboy* gameboy;
+        
+        // Window and renderer
+        SDL_Window* window;
+        SDL_Renderer* renderer;
+        SDL_Texture* texture;
 
-private:
-    // Window and renderer
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
+        // Color palette 
+        // 0: white
+        // 1: light
+        // 2: dark
+        // 3: black
 
-    // Scale factor for the window 
-    int scale;
-
-    //color palette 
-    // Color 0: white
-    // Color 1: light
-    // Color 2: dark
-    // Color 3: black
-    SDL_Color palette[4] = {
-        {255, 255, 255, 255},  
-        {192, 192, 192, 255},  
-        {96, 96, 96, 255},     
-        {0, 0, 0, 255}         
-    };
-
-    // flag to track if initialization was successful
-    bool initialized;
+        uint8_t palette[4][3] = {
+            { 255, 255, 255 },  
+            { 192, 192, 192 },  
+            { 96, 96, 96 },     
+            { 0, 0, 0 }         
+        };
 };

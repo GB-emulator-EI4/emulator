@@ -12,6 +12,9 @@ Log* logger = nullptr;
 Logger* masterLogger = nullptr;
 
 void cleanup() {
+    // Clean SDL
+    sdl->cleanup();
+
     delete gameboy;
     delete sdl;
     
@@ -19,49 +22,34 @@ void cleanup() {
     delete masterLogger;
 }
 
-// Minisheel, available commands: q (exit), help (show available commands), m (run one M cycle), f (free run), dr (dump registers), df (dump flags), ra (run until pc reaches address), rd (read address)
-
 void minishell() {
     string command;
     
     while(true) {
-        // Handle SDL events
-        if(!sdl->handleEvents()) return;
-
         cout << "> ";
         cin >> command;
 
-        if(command == "q") break;
-        else if(command == "m") {
-            gameboy->runMcycle();
-        }
-        else if(command == "f") {
-            gameboy->freeRun();
-        }
-        else if(command == "dr") {
-            gameboy->cpu->DUMPR();
-        }
-        else if(command == "df") {
-            gameboy->cpu->DUMPFlags();
-        }
-        else if(command == "ra") {
+        if(command == "q") break; // Exit
+        else if(command == "m") gameboy->runMcycle(); // Help
+        else if(command == "f") gameboy->freeRun(); // Run one M cycle
+        else if(command == "dr") gameboy->cpu->DUMPR(); // Free run
+        else if(command == "df") gameboy->cpu->DUMPFlags(); // Dump all registers
+        else if(command == "ra") { // Run until PC reaches address
             uint16_t address;
 
             cout << "Enter address: ";
             cin >> hex >> address;
 
             while(gameboy->cpu->getPC() != address) gameboy->runMcycle();
-        }
-        else if(command == "rd") {
+        } else if(command == "rd") { // Read address
             uint16_t address;
 
             cout << "Enter address: ";
             cin >> hex >> address;
 
             cout << "Value at address " << intToHex(address) << ": " << intToHex((uint8_t&) gameboy->memory->fetch8(address)) << endl;
-        }
-        else if(command == "help") cout << "Available commands: q (exit), help" << endl;
-        else break;
+        } else if(command == "help") cout << "Available commands: q (quit), m (run one M cycle), f (free run), dr (dump registers), df (dump flags), ra (run until PC reaches address), rd (read address)" << endl;
+        else break; // Unknown command
     }
 }
 
@@ -69,9 +57,10 @@ int main() {
     // Init logger
     masterLogger = Logger::getInstance();
 
-    // Available levels: LOG_LOG, LOG_ERROR
+    // Available levels: LOG_LOG, LOG_ERROR, LOG_WARNING
     // Available domains: Main, Gameboy, CPU, Memory, PPU
-    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {}, {"Constructor", "Destructor", "CPU Fetch", "Decoding opcode", "CPU Cycle", "LCD infos"});
+    // Filters: "CPU Fetch", "Decoding opcode", "CPU Cycle"
+    masterLogger->setConfig(true, {LOG_LOG, LOG_ERROR, LOG_WARNING}, {"Main", "Gameboy", "CPU", "Memory", "PPU"}, {"Constructor", "Destructor", "LCD infos"});
 
     // Get logger for main
     logger = masterLogger->getLogger("Main");
@@ -80,7 +69,7 @@ int main() {
     *logger << "Logger configured, initializing Gameboy";
 
     // Init SDL
-    sdl = new SDLRenderer(2);
+    sdl = new SDLRenderer();
     if(!sdl->initialize()) {
         *logger << "SDL initialization failed, exiting";
 
@@ -93,22 +82,16 @@ int main() {
     gameboy->setRenderer(sdl);
     
     // Load ROMs
-    cout << endl;
-    logger->log("Set BOOT ROM");
+    logger->log("\nSet BOOT ROM");
     gameboy->setBootRom(BOOT_ROM_PATH);
 
     // Load game ROM
-    cout << endl;
-    logger->log("Set game ROM");
+    logger->log("\nSet game ROM");
     gameboy->setGameRom(ROM_PATH);
 
     // Enter minishell
-    cout << endl;
-    logger->log("Entering minishell");
+    logger->log("\nEntering minishell");
     minishell();
-
-    // Clean SDL
-    sdl->cleanup();
 
     // Free everything
     cleanup();

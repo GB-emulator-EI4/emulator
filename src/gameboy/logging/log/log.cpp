@@ -15,23 +15,5 @@ Log::Log(const string &domain) : domain(domain), logger(Logger::getInstance()) {
 }
 
 Log::~Log() {
-    
-}
-
-/*
-
-    Functions
-
-*/
-
-void Log::log(const string &message) {
-    this->logger->log(LOG_LOG, domain, message);
-}
-
-void Log::error(const string &message) {
-    this->logger->log(LOG_ERROR, domain, message);
-}
-
-void Log::warning(const string &message) {
-    this->logger->log(LOG_WARNING, domain, message);
+    // Nothing to do
 }
