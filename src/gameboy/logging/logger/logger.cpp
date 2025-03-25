@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#include "../../../constants/constants.hpp"
+
 #include "logger.hpp"
 
 /*
@@ -45,7 +47,7 @@ Log* Logger::getLogger(const string &domain) {
 
 void Logger::log(const char &level, const string &domain, const string &message) {
     // Check if logging is enabled
-    if(!enableLogging) return;
+    if(!ENABLE_LOGGING) return;
 
     // Check if level is enabled
     if(find(enabledLevels.begin(), enabledLevels.end(), level) == enabledLevels.end()) return;
@@ -64,8 +66,7 @@ void Logger::log(const char &level, const string &domain, const string &message)
     else cout << "[" + domain + "] " << message << endl;
 }
 
-void Logger::setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter) {
-    this->enableLogging = enableLogging;
+void Logger::setConfig(const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter) {
     this->enabledLevels = enabledLevels;
     this->enabledDomains = enabledDomains;
     this->wordFilter = wordFilter;

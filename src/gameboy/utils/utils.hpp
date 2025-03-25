@@ -6,6 +6,8 @@
 
 using namespace std;
 
+#include "../../constants/constants.hpp"
+
 /*
 
     Convert an integer to a hexadecimal string
@@ -14,6 +16,8 @@ using namespace std;
 
 template <typename T>
 string intToHex(T i) {
+    if(!ENABLE_LOGGING) return "";
+
     stringstream stream;
     stream << uppercase << hex << setw(sizeof(T)) << setfill('0') << (uint16_t) i;
 

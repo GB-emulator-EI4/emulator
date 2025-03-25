@@ -24,7 +24,7 @@ class Logger {
 
         void log(const char &level, const string &domain, const string &message);
 
-        void setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter);
+        void setConfig(const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter);
 
     private:
         // Instance
