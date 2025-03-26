@@ -88,9 +88,9 @@ private:
     void checkSTATInterrupts();
 
     //enable methods
-    bool isBGEnabled() const;
-    bool isWDEnabled() const;
-    bool areSpritesEnabled() const;
+    inline bool isBGEnabled() const;
+    inline bool isWDEnabled() const;
+    inline bool areSpritesEnabled() const;
 
 };
 
