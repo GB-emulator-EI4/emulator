@@ -27,11 +27,13 @@ profile: build ${OUTPUT_DIR}/${OUTPUT}
 	@mkdir -p ${OUTPUT_DIR}/flamegraph.out
 	@mkdir -p ${OUTPUT_DIR}/perf.out
 
-	@sudo perf record --quiet -g -- ${OUTPUT_DIR}/${OUTPUT}
-	@mv perf.data ${OUTPUT_DIR}/perf.out/perf.data
+	@sudo bash -c "echo -e 'ra\nf3\nq\n' | perf record --quiet -g -- ${OUTPUT_DIR}/${OUTPUT}"
+	@mv -f perf.data ${OUTPUT_DIR}/perf.out/perf.data
 
 	@sudo bash -c "perf script -i ${OUTPUT_DIR}/perf.out/perf.data | ./libs/FlameGraph/stackcollapse-perf.pl > dist/flamegraph.out/out.folded"
 	@sudo ./libs/FlameGraph/flamegraph.pl ${OUTPUT_DIR}/flamegraph.out/out.folded > ${OUTPUT_DIR}/flamegraph.svg
+
+	@firefox ${OUTPUT_DIR}/flamegraph.svg
 
 clean:
 	@find . -type f -name '*.o' -exec rm {} +
