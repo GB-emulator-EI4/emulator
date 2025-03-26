@@ -67,9 +67,6 @@ void Gameboy::runMcycle() {
     // Run one M - cycle
     logger->log("---> Gameboy run M cycle");
 
-    // Handle SDL events
-    this->renderer->handleEvents();
-
     this->cyclesCounter = 0;
     while(this->cyclesCounter < 4) {
         /*

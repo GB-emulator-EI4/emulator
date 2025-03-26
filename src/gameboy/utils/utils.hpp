@@ -17,11 +17,12 @@ using namespace std;
 template <typename T>
 string intToHex(T i) {
     if(!ENABLE_LOGGING) return "";
+    else {
+        stringstream stream;
+        stream << uppercase << hex << setw(sizeof(T)) << setfill('0') << (uint16_t) i;
 
-    stringstream stream;
-    stream << uppercase << hex << setw(sizeof(T)) << setfill('0') << (uint16_t) i;
-
-    return "0x" + stream.str();
+        return "0x" + stream.str();
+    }
 }
 
 /*
