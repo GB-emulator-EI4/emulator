@@ -130,19 +130,19 @@ void PPU::checkSTATInterrupts() {
 }
 
 //check bit 0 of LCDC to know if the background is enabled
-bool PPU::isBGEnabled() const {
+inline bool PPU::isBGEnabled() const {
     uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     return lcdc & 0x01;
 }
 
 //check bit 5 of LCDC to know if window is enbled
-bool PPU::isWDEnabled() const {
+inline bool PPU::isWDEnabled() const {
     uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     return lcdc & 0x20;
 }
 
 //check bit 1 of LCDC to know if sprites are enabled
-bool PPU::areSpritesEnabled() const {
+inline bool PPU::areSpritesEnabled() const {
     uint8_t lcdc = this->gameboy->memory->fetch8(LCDC);
     return lcdc & 0x02;
 }
