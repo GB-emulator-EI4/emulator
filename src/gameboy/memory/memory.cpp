@@ -69,53 +69,56 @@ char& Memory::fetch8(const uint16_t &address) {
     if(ENABLE_BOOT_ROM && address < BOOTROM_OFFSET + BOOTROM_SIZE) return this->bootrom[address];
 
     // Check if the address is in the fixed ROM
-    if(address < ROM_FIXED_OFFSET + ROM_FIXED_SIZE) return this->romFixed[address - ROM_FIXED_OFFSET];
+    else if(address < ROM_FIXED_OFFSET + ROM_FIXED_SIZE) return this->romFixed[address - ROM_FIXED_OFFSET];
 
     // Check if the address is in the banked ROM
-    if(address >= ROM_BANKED_OFFSET && address < ROM_BANKED_OFFSET + ROM_BANKED_SIZE) return this->romBanked[address - ROM_BANKED_OFFSET];
+    else if(address >= ROM_BANKED_OFFSET && address < ROM_BANKED_OFFSET + ROM_BANKED_SIZE) return this->romBanked[address - ROM_BANKED_OFFSET];
 
     // Check if the address is in the VRAM
-    if(address >= VRAM_OFFSET && address < VRAM_OFFSET + VRAM_SIZE) return this->vram[address - VRAM_OFFSET];
+    else if(address >= VRAM_OFFSET && address < VRAM_OFFSET + VRAM_SIZE) return this->vram[address - VRAM_OFFSET];
 
     // Check if the address is in the EXTRAM
-    if(address >= EXTRAM_OFFSET && address < EXTRAM_OFFSET + EXTRAM_SIZE) return this->extram[address - EXTRAM_OFFSET];
+    else if(address >= EXTRAM_OFFSET && address < EXTRAM_OFFSET + EXTRAM_SIZE) return this->extram[address - EXTRAM_OFFSET];
 
     // Check if the address is in the fixed WRAM
-    if(address >= WRAM_FIXED_OFFSET && address < WRAM_FIXED_OFFSET + WRAM_FIXED_SIZE) return this->wramFixed[address - WRAM_FIXED_OFFSET];
+    else if(address >= WRAM_FIXED_OFFSET && address < WRAM_FIXED_OFFSET + WRAM_FIXED_SIZE) return this->wramFixed[address - WRAM_FIXED_OFFSET];
 
     // Check if the address is in the banked WRAM
-    if(address >= WRAM_BANKED_OFFSET && address < WRAM_BANKED_OFFSET + WRAM_BANKED_SIZE) return this->wramBanked[address - WRAM_BANKED_OFFSET];
+    else if(address >= WRAM_BANKED_OFFSET && address < WRAM_BANKED_OFFSET + WRAM_BANKED_SIZE) return this->wramBanked[address - WRAM_BANKED_OFFSET];
 
     // Check if the address is in the OAM
-    if(address >= OAM_OFFSET && address < OAM_OFFSET + OAM_SIZE) return this->oam[address - OAM_OFFSET];
+    else if(address >= OAM_OFFSET && address < OAM_OFFSET + OAM_SIZE) return this->oam[address - OAM_OFFSET];
 
     // Check if the address is in the IO
-    if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) return this->fetchIOs(address);
+    else if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) return this->fetchIOs(address);
 
     // Check if the address is in the HRAM
-    if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) {
+    else if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) {
         // Log warning if reading interrupts infos
         if(address == 0xFFFF) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
         
         return this->hram[address - HRAM_OFFSET];
     }
 
-    // If the address is not in any of the memory blocks, throw an error
-    logger->error("Error: Invalid memory address, reading at address " + intToHex(address));
-    exit(1);
+    // Out of bounds
+    else {
+        // If the address is not in any of the memory blocks, throw an error
+        logger->error("Error: Invalid memory address, reading at address " + intToHex(address));
+        exit(1);
+    }
 }
 
 char& Memory::fetchIOs(const uint16_t &address) {
     // TODO add better filter and log / warning for IOs reading, seprate log for controller, timers, lcd ...
 
     // Log warning if reading interrupts infos
-    if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+    // if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
 
     // Log if reading LCD status
-    else if(address >= 0xFF40 && address <= 0xFF45) logger->log("Warning: Reading LCD infos at address " + intToHex(address));
+    // else if(address >= 0xFF40 && address <= 0xFF45) logger->log("Warning: Reading LCD infos at address " + intToHex(address));
     
     // Log warning if accessing other IOs
-    else logger->warning("Warning: Accessing IO at address " + intToHex(address));
+    // else logger->warning("Warning: Accessing IO at address " + intToHex(address));
 
     return this->io[address - IO_OFFSET];
 }

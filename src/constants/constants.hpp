@@ -46,7 +46,7 @@
 
 */
 
-#define DISPLAY_WINDOW true
+#define ENABLE_RENDERING true
 
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 144
