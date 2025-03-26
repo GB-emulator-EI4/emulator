@@ -23,7 +23,7 @@ bool SDLRenderer::initialize() {
     }
 
     // Create window
-    int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
+    int flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN;
     this->window = SDL_CreateWindow("GameBoy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH * SCREEN_SCALE, SCREEN_HEIGHT * SCREEN_SCALE, flags);
     if(!this->window) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
@@ -32,9 +32,9 @@ bool SDLRenderer::initialize() {
         return false;
     }
 
-    if(!DISPLAY_WINDOW) SDL_MinimizeWindow(this->window );
+    if(!DISPLAY_WINDOW) SDL_MinimizeWindow(this->window);
 
-    // renderer
+    // Create renderer
     this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if(!this->renderer) {
         std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
@@ -54,6 +54,10 @@ bool SDLRenderer::initialize() {
         cleanup();
         return false;
     }
+
+    // Pre render empty
+    SDL_RenderClear(this->renderer);
+    SDL_RenderPresent(this->renderer);
 
     return true;
 }
@@ -78,6 +82,9 @@ void SDLRenderer::render(const FrameBuffer &framebuffer) {
     
     // Render texture
     SDL_RenderCopy(this->renderer, this->texture, NULL, NULL);
+
+    // Show window
+    SDL_ShowWindow(this->window);
     
     // Update screen
     SDL_RenderPresent(this->renderer);

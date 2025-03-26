@@ -30,8 +30,8 @@ profile: build ${OUTPUT_DIR}/${OUTPUT}
 	@sudo perf record --quiet -g -- ${OUTPUT_DIR}/${OUTPUT}
 	@mv perf.data ${OUTPUT_DIR}/perf.out/perf.data
 
-	@sudo perf script -i ${OUTPUT_DIR}/perf.out/perf.data | ./libs/FlameGraph/stackcollapse-perf.pl > dist/flamegraph.out/out.folded
-	@./libs/FlameGraph/flamegraph.pl ${OUTPUT_DIR}/flamegraph.out/out.folded > ${OUTPUT_DIR}/flamegraph.svg
+	@sudo bash -c "perf script -i ${OUTPUT_DIR}/perf.out/perf.data | ./libs/FlameGraph/stackcollapse-perf.pl > dist/flamegraph.out/out.folded"
+	@sudo ./libs/FlameGraph/flamegraph.pl ${OUTPUT_DIR}/flamegraph.out/out.folded > ${OUTPUT_DIR}/flamegraph.svg
 
 clean:
 	@find . -type f -name '*.o' -exec rm {} +
