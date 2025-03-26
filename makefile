@@ -13,6 +13,7 @@ OUTPUT_DIR := ./dist
 
 all: clean build run
 br: build run
+f: clean build runf
 
 build: ${OBJS}
 	@mkdir -p ${OUTPUT_DIR}
@@ -23,6 +24,9 @@ build: ${OBJS}
 
 run: ${OUTPUT_DIR}/${OUTPUT}
 	@${OUTPUT_DIR}/${OUTPUT}
+
+runf: ${OUTPUT_DIR}/${OUTPUT}
+	@bash -c "echo -e 'f\n' | ${OUTPUT_DIR}/${OUTPUT}"
 
 profile: build ${OUTPUT_DIR}/${OUTPUT}
 	@mkdir -p ${OUTPUT_DIR}/flamegraph.out

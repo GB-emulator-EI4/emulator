@@ -46,6 +46,8 @@ class Gameboy;
 
 #define OAM_SIZE 160
 
+#define NO_RAM_SIZE 96
+
 #define IO_SIZE 128
 
 #define HRAM_SIZE 128
@@ -64,6 +66,8 @@ class Gameboy;
 #define WRAM_BANKED_OFFSET 0xD000
 
 #define OAM_OFFSET 0xFE00
+
+#define NO_RAM_OFFSET 0xFEA0 // 0xFEA0 - 0xFEFF, not usable
 
 #define IO_OFFSET 0xFF00
 
@@ -99,6 +103,8 @@ class Memory {
         char wramBanked[WRAM_BANKED_SIZE]; // 4KB
 
         char oam[OAM_SIZE]; // 160B
+
+        char noRam[NO_RAM_SIZE]; // 96B
 
         char io[IO_SIZE]; // 128B
 

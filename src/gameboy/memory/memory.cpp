@@ -18,7 +18,7 @@ using namespace std;
 
 */
 
-Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), hram() {
+Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram() {
     logger = Logger::getInstance()->getLogger("Memory");
     logger->log("Memory Constructor");
 }
@@ -92,6 +92,17 @@ char& Memory::fetch8(const uint16_t &address) {
     // Check if the address is in the IO
     else if(address >= IO_OFFSET && address < IO_OFFSET + IO_SIZE) return this->fetchIOs(address);
 
+    else if(address >= NO_RAM_OFFSET && address < NO_RAM_OFFSET + NO_RAM_SIZE) {
+        // Log warning if reading unusable memory
+        logger->warning("Warning: Reading unusable memory at address " + intToHex(address));
+
+        // Write 0xF to the address
+        this->noRam[address - NO_RAM_OFFSET] = (char) 0xFF;
+
+        // Return ref to adress, match expected behavior of this unmapped memory section
+        return this->noRam[address - NO_RAM_OFFSET];
+    }
+
     // Check if the address is in the HRAM
     else if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) {
         // Log warning if reading interrupts infos
@@ -104,7 +115,7 @@ char& Memory::fetch8(const uint16_t &address) {
     else {
         // If the address is not in any of the memory blocks, throw an error
         logger->error("Error: Invalid memory address, reading at address " + intToHex(address));
-        exit(1);
+        exit(123);
     }
 }
 

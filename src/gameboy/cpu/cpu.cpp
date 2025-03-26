@@ -405,6 +405,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->POP(this->b, this->c);
         } break;
 
+        case 0xC3: { // JP n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP n16 with address " + intToHex(address));
+
+            this->pc = address;
+            return;
+        } break;
+
         case 0xC5: { // PUSH rr
             logger->log("PUSH rr");
 
@@ -536,6 +547,14 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc++;
             return this->LD(this->a, this->gameboy->memory->fetch8(0xFF00 + this->c));
+        } break;
+
+        case 0xF3: { // DI
+            logger->log("DI");
+            this->pc++;
+
+            // TODO
+            return;
         } break;
 
         case 0xF6: { // OR A, n8
