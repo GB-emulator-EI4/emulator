@@ -38,4 +38,25 @@
 
 // LDH
 // #define ROM_PATH "roms/tests/homemade/LDH/LDH r (r).bin" // OK
-// #define ROM_PATH "roms/tests/homemade/LDH/LDH (r) r.bin"
+// #define ROM_PATH "roms/tests/homemade/LDH/LDH (r) r.bin" // OK
+
+/*
+
+    Rendering
+
+*/
+
+#define DISPLAY_WINDOW true
+
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 144
+
+#define SCREEN_SCALE 5
+
+/*
+
+    Logging
+
+*/
+
+#define ENABLE_LOGGING false

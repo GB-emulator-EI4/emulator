@@ -6,7 +6,6 @@
 using namespace std;
 
 class Log;
-#include "../log/log.hpp"
 
 #define LOG_LOG 1
 #define LOG_ERROR 2
@@ -25,7 +24,7 @@ class Logger {
 
         void log(const char &level, const string &domain, const string &message);
 
-        void setConfig(const bool &enableLogging, const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter);
+        void setConfig(const vector<char> &enabledLevels, const vector<string> &enabledDomains, const vector<string> &wordFilter);
 
     private:
         // Instance
@@ -44,3 +43,5 @@ class Logger {
     protected:
 
 };
+
+#include "../log/log.hpp"

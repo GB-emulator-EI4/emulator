@@ -19,18 +19,18 @@ void PPU::step() {
     //handle mode transitions based on current T-cycle
     switch (currentMode) {
         case Mode::OAMSearch:
-            if (this->gameboy->Tcycles == 0) {
+            if (this->gameboy->getTcycles() == 0) {
                 // OAM Search mode
                 checkSTATInterrupts(); 
             }
             
-            if (this->gameboy->Tcycles >= 80) {
+            if (this->gameboy->getTcycles() >= 80) {
                 currentMode = Mode::Drawing;
             }
             break;
             
         case Mode::Drawing:
-            if (this->gameboy->Tcycles >= 252) {
+            if (this->gameboy->getTcycles() >= 252) {
                 currentMode = Mode::HBlank;
                 renderScanline(); 
                 
@@ -46,7 +46,7 @@ void PPU::step() {
             break;
             
         case Mode::VBlank:
-            if (this->gameboy->Tcycles == 0 && currentLY == 144) {
+            if (this->gameboy->getTcycles() == 0 && currentLY == 144) {
                 //entered VBlank
                 this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
                 checkSTATInterrupts();
@@ -54,7 +54,7 @@ void PPU::step() {
             break;
     }
     
-    if (this->gameboy->Tcycles == 455) {
+    if (this->gameboy->getTcycles() == 455) {
         currentLY++;
         uint8_t& nLY = (uint8_t&) this->gameboy->memory->fetch8(LY);
         nLY = currentLY;
@@ -67,7 +67,7 @@ void PPU::step() {
             currentLY = 0;
             nLY = currentLY;
         }
-    } else if (this->gameboy->Tcycles == 0) {
+    } else if (this->gameboy->getTcycles() == 0) {
         if (currentLY == 144) {
             currentMode = Mode::VBlank;
         } else if (currentLY == 0 || currentLY < 144) {

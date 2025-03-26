@@ -1,97 +1,110 @@
 #include <iostream>
 
-
 #include "../ppu/ppu.hpp"
 
 #include <string>
 #include <filesystem>
 
-SDLRenderer::SDLRenderer(int scale)
-    : window(nullptr), renderer(nullptr), texture(nullptr), scale(scale), initialized(false) {
+extern bool runMinishell;
+
+SDLRenderer::SDLRenderer() : window(nullptr), renderer(nullptr), texture(nullptr) {
+    this->gameboy = Gameboy::getInstance();
 }
 
 SDLRenderer::~SDLRenderer() {
-    cleanup();
+    this->cleanup();
 }
 
 bool SDLRenderer::initialize() {
-    // inti sdl
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    // Inti sdl
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    // window
-    window = SDL_CreateWindow("GameBoy",SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH * scale, SCREEN_HEIGHT * scale,SDL_WINDOW_SHOWN);
-
-    if (!window) {
+    // Create window
+    int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
+    this->window = SDL_CreateWindow("GameBoy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH * SCREEN_SCALE, SCREEN_HEIGHT * SCREEN_SCALE, flags);
+    if(!this->window) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        
         cleanup();
         return false;
     }
+
+    if(!DISPLAY_WINDOW) SDL_MinimizeWindow(this->window );
 
     // renderer
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
+    this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if(!this->renderer) {
         std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+
         cleanup();
         return false;
     }
 
-    //rendering scale quality
+    // Rendering scale quality
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");  // Use nearest neighbor scaling for pixelated look
 
     // texture that will be used to update the screen
-    texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_STREAMING,SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    if (!texture) {
+    this->texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+    if(!this->texture) {
         std::cerr << "Texture could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+
         cleanup();
         return false;
     }
 
-    initialized = true;
     return true;
 }
 
-void SDLRenderer::render(const FrameBuffer framebuffer) {
-    if (!initialized) return;
-    
-    //temporary buffer
+void SDLRenderer::render(const FrameBuffer &framebuffer) {
+    // Temporary buffer
     uint32_t pixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
     
     // Convert 2-bit color indices 
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-        for (int x = 0; x < SCREEN_WIDTH; x++) {
-            uint8_t colorIndex = framebuffer[y][x];
-            SDL_Color color = palette[colorIndex];
-
-            pixelData[y * SCREEN_WIDTH + x] = (color.r << 24) | (color.g << 16) | (color.b << 8) | color.a;
+    for(uint8_t y = 0; y < SCREEN_HEIGHT; y++) {
+        for(uint8_t x = 0; x < SCREEN_WIDTH; x++) {
+            uint8_t* color = this->palette[framebuffer[y][x]];
+            pixelData[y * SCREEN_WIDTH + x] = (color[0] << 16) | (color[1] << 8) | color[2];
         }
     }
 
-    // update texture 
-    SDL_UpdateTexture(texture, NULL, pixelData, SCREEN_WIDTH * sizeof(uint32_t));
+    // Update texture 
+    SDL_UpdateTexture(this->texture, NULL, pixelData, SCREEN_WIDTH * sizeof(uint32_t));
     
-    //clear screen
-    SDL_RenderClear(renderer);
+    // Clear screen
+    SDL_RenderClear(this->renderer);
     
-    //render texture
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    // Render texture
+    SDL_RenderCopy(this->renderer, this->texture, NULL, NULL);
     
-    //update screen
-    SDL_RenderPresent(renderer);
+    // Update screen
+    SDL_RenderPresent(this->renderer);
+
+    // Handle SDL events
+    this->handleEvents();
 }
 
-bool SDLRenderer::handleEvents() {
+void SDLRenderer::handleEvents() {
     SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
-            return false; 
+
+    while(SDL_PollEvent(&e)) {
+        if(e.type == SDL_QUIT) {
+            this->gameboy->stop();
         }
-        // other events ? keyboard WASD ?
+
+        // Check ESC key
+        else if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+            runMinishell = false;
+            this->gameboy->stop();
+        }
+
+        // Check space bar
+        else if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
+            this->gameboy->stop();
+        }
     }
-    return true; 
 }
 
 void SDLRenderer::cleanup() {
@@ -110,8 +123,5 @@ void SDLRenderer::cleanup() {
         window = nullptr;
     }
     
-    if (initialized) {
-        SDL_Quit();
-        initialized = false;
-    }
+    SDL_Quit();
 }

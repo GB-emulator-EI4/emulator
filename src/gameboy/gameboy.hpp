@@ -46,12 +46,10 @@ class Gameboy {
 
         inline void pause() { this->running = false; }
         inline void stop() { this->running = false; }
-        void quit();
 
-        // Cycle status
-        int cyclesCounter;
-        int Mcycles;
-        int Tcycles;
+        // Getters and Setters
+        inline const int& getMcycles() const { return this->Mcycles; }
+        inline const int& getTcycles() const { return this->Tcycles; }
 
     private:
         // Constructors
@@ -65,4 +63,9 @@ class Gameboy {
     
         // Vars
         bool running;
+
+        // Cycles counters
+        int cyclesCounter;
+        int Mcycles;
+        int Tcycles;
 };
