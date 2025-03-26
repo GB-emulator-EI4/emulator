@@ -5,6 +5,8 @@
 #include <string>
 #include <filesystem>
 
+extern bool runMinishell;
+
 SDLRenderer::SDLRenderer() : window(nullptr), renderer(nullptr), texture(nullptr) {
     this->gameboy = Gameboy::getInstance();
 }
@@ -94,6 +96,12 @@ void SDLRenderer::handleEvents() {
 
         // Check ESC key
         else if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+            runMinishell = false;
+            this->gameboy->stop();
+        }
+
+        // Check space bar
+        else if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
             this->gameboy->stop();
         }
     }

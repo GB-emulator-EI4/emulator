@@ -11,6 +11,8 @@ SDLRenderer* sdl = nullptr;
 Log* logger = nullptr;
 Logger* masterLogger = nullptr;
 
+bool runMinishell = true;
+
 void cleanup() {
     // Clean SDL
     sdl->cleanup();
@@ -25,7 +27,7 @@ void cleanup() {
 void minishell() {
     string command;
     
-    while(true) {
+    while(runMinishell) {
         cout << "> ";
         cin >> command;
 
