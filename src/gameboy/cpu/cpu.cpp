@@ -331,7 +331,8 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("NOP");
             this->pc++;
 
-            return this->gameboy->stop();
+            // return this->gameboy->stop();
+            return;
         } break;
 
         /*

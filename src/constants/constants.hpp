@@ -59,4 +59,4 @@
 
 */
 
-#define ENABLE_LOGGING false
+#define ENABLE_LOGGING true

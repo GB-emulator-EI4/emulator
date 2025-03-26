@@ -11,7 +11,8 @@ OBJS = ${SOURCES:.cpp=.o}
 OUTPUT := program
 OUTPUT_DIR := ./dist
 
-all: build run
+all: clean build run
+br: build run
 
 build: ${OBJS}
 	@mkdir -p ${OUTPUT_DIR}
