@@ -13,7 +13,7 @@ OUTPUT_DIR := ./dist
 
 all: clean build run
 br: build run
-f: clean build runf
+f: build runf
 
 build: ${OBJS}
 	@mkdir -p ${OUTPUT_DIR}

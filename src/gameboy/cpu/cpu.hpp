@@ -80,8 +80,9 @@ class CPU {
         */
 
         // JUMP
-        bool JRN(const int8_t& e8, const uint8_t& flag); // 0x20, 0x30
-        bool JRS(const int8_t& e8, const uint8_t& flag); // 0x18, 0x28
+        void JRN(const int8_t& e8, const uint8_t& flag); // 0x20, 0x30
+        void JRS(const int8_t& e8, const uint8_t& flag); // 0x18, 0x28
+        void JPN(const uint16_t& adr, const uint8_t& flag); // 0xC2, 0xCA, 0xD2, 0xDA
 
         // LD
         void LD(uint8_t& r1, const uint8_t& r2);
@@ -134,6 +135,7 @@ class CPU {
 
         // CALL
         void CALL(const uint16_t &adr);
+        void CALLC(const uint16_t &adr, const uint8_t &flag);
 
         // RET
         void RET();
@@ -146,6 +148,18 @@ class CPU {
 
         // RLA
         void RLA();
+
+        // SWAP
+        void SWAP(uint8_t &r);
+
+        // RRA
+        void RRA();
+
+        // SRL
+        void SRL(uint8_t &r);
+
+        // RR
+        void RR(uint8_t &r);
 
         /*
         

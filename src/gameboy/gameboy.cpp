@@ -124,10 +124,11 @@ void Gameboy::freeRun() {
 
 void Gameboy::setBootRom(const string &bootRomPath) {
     logger->log("Gameboy setting boot ROM");
-    this->memory->loadRom(BOOTROM, BOOTROM_OFFSET, bootRomPath, BOOTROM_SIZE);
+    this->memory->loadRom(BOOTROM, bootRomPath, 0, BOOTROM_SIZE);
 }
 
 void Gameboy::setGameRom(const string &gameRomPath) {
     logger->log("Gameboy setting game ROM");
-    this->memory->loadRom(ROM_FIXED, ROM_FIXED_OFFSET, gameRomPath, ROM_FIXED_SIZE);
+    this->memory->loadRom(ROM_FIXED, gameRomPath, 0, ROM_FIXED_SIZE);
+    this->memory->loadRom(ROM_BANKED, gameRomPath, ROM_FIXED_SIZE, ROM_BANKED_SIZE);
 }

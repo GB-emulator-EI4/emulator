@@ -33,7 +33,7 @@ Memory::~Memory() {
 
 */
 
-void Memory::loadRom(const int &memoryBlock, const int &startAdress, const string &romPath, const int &memorySize) {
+void Memory::loadRom(const int &memoryBlock, const string &romPath, const int readOffset, const int &memorySize) {
     // Open ROM file
     ifstream romFile(romPath, ios::binary);
 
@@ -47,14 +47,17 @@ void Memory::loadRom(const int &memoryBlock, const int &startAdress, const strin
     auto fileSize = std::filesystem::file_size(romPath);
 
     // Log
-    logger->log("Loading ROM at address " + to_string(startAdress) + " with size " + to_string(fileSize));
+    logger->log("Loading ROM at address " + to_string(readOffset) + " with size " + to_string(fileSize));
+
+    // Move file cursor to the read offset
+    romFile.seekg(readOffset);
 
     // Read ROM file
     if(memoryBlock == BOOTROM) romFile.read(this->bootrom, memorySize);
     else if(memoryBlock == ROM_FIXED) romFile.read(this->romFixed, memorySize);
     else if(memoryBlock == ROM_BANKED) romFile.read(this->romBanked, memorySize);
     else {
-        logger->error("Error: Invalid memory block, loading ROM at address " + to_string(startAdress));
+        logger->error("Error: Invalid memory block, loading ROM at address " + to_string(memoryBlock));
         exit(1);
     }
 
@@ -66,10 +69,14 @@ void Memory::loadRom(const int &memoryBlock, const int &startAdress, const strin
 
 char& Memory::fetch8(const uint16_t &address) {
     // Check if the address is in the boot ROM
-    if(ENABLE_BOOT_ROM && address < BOOTROM_OFFSET + BOOTROM_SIZE) return this->bootrom[address];
+    if(ENABLE_BOOT_ROM && address < BOOTROM_OFFSET + BOOTROM_SIZE) {
+        // Read at address 0xFF50 to check if the boot ROM is disabled
+        const char& bootRomEnabled = this->fetch8(0xFF50);
+        if(bootRomEnabled == 0) return this->bootrom[address];
+    }
 
     // Check if the address is in the fixed ROM
-    else if(address < ROM_FIXED_OFFSET + ROM_FIXED_SIZE) return this->romFixed[address - ROM_FIXED_OFFSET];
+    if(address < ROM_FIXED_OFFSET + ROM_FIXED_SIZE) return this->romFixed[address - ROM_FIXED_OFFSET];
 
     // Check if the address is in the banked ROM
     else if(address >= ROM_BANKED_OFFSET && address < ROM_BANKED_OFFSET + ROM_BANKED_SIZE) return this->romBanked[address - ROM_BANKED_OFFSET];
@@ -85,6 +92,8 @@ char& Memory::fetch8(const uint16_t &address) {
 
     // Check if the address is in the banked WRAM
     else if(address >= WRAM_BANKED_OFFSET && address < WRAM_BANKED_OFFSET + WRAM_BANKED_SIZE) return this->wramBanked[address - WRAM_BANKED_OFFSET];
+
+    else if(address >= ECHO_RAM_OFFSET && address < ECHO_RAM_OFFSET + ECHO_RAM_SIZE) return this->fetch8(address - ECHO_RAM_OFFSET + WRAM_FIXED_OFFSET);
 
     // Check if the address is in the OAM
     else if(address >= OAM_OFFSET && address < OAM_OFFSET + OAM_SIZE) return this->oam[address - OAM_OFFSET];

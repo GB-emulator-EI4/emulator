@@ -25,6 +25,8 @@ class Gameboy;
 #define WRAM_FIXED 5
 #define WRAM_BANKED 6
 
+#define ECHO_RAM 10
+
 #define OAM 7
 
 #define IO 8
@@ -43,6 +45,8 @@ class Gameboy;
 
 #define WRAM_FIXED_SIZE 4096
 #define WRAM_BANKED_SIZE 4096
+
+#define ECHO_RAM_SIZE 7680
 
 #define OAM_SIZE 160
 
@@ -65,6 +69,8 @@ class Gameboy;
 #define WRAM_FIXED_OFFSET 0xC000
 #define WRAM_BANKED_OFFSET 0xD000
 
+#define ECHO_RAM_OFFSET 0xE000
+
 #define OAM_OFFSET 0xFE00
 
 #define NO_RAM_OFFSET 0xFEA0 // 0xFEA0 - 0xFEFF, not usable
@@ -82,7 +88,7 @@ class Memory {
         char& fetch8(const uint16_t &address);
 
         // ROM load functions
-        void loadRom(const int &memoryBlock, const int &startAdress, const string &bootromPath, const int &size);
+        void loadRom(const int &memoryBlock, const string &bootromPath, const int readOffset, const int &size);
 
     private:
         // Gameboy ref
