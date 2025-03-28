@@ -18,9 +18,16 @@ using namespace std;
 
 */
 
-Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram() {
+Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram(), interruptEnable(0) {
     logger = Logger::getInstance()->getLogger("Memory");
     logger->log("Memory Constructor");
+
+    this->preloadValues();
+}
+
+void Memory::preloadValues() {
+    // Write to the JOYPAD register
+    this->fetch8(0xFF00) = 0x0F;
 }
 
 Memory::~Memory() {
@@ -113,11 +120,12 @@ char& Memory::fetch8(const uint16_t &address) {
     }
 
     // Check if the address is in the HRAM
-    else if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) {
-        // Log warning if reading interrupts infos
-        if(address == 0xFFFF) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
-        
-        return this->hram[address - HRAM_OFFSET];
+    else if(address >= HRAM_OFFSET && address < HRAM_OFFSET + HRAM_SIZE) return this->hram[address - HRAM_OFFSET];
+
+    // Log warning if reading interrupts infos
+    if(address == 0xFFFF) {
+        logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+        return this->interruptEnable;
     }
 
     // Out of bounds
@@ -129,16 +137,44 @@ char& Memory::fetch8(const uint16_t &address) {
 }
 
 char& Memory::fetchIOs(const uint16_t &address) {
-    // TODO add better filter and log / warning for IOs reading, seprate log for controller, timers, lcd ...
+    // Log reading joypad
+    if(address == 0xFF00) logger->log("Warning: Reading joypad at address " + intToHex(address));
 
-    // Log warning if reading interrupts infos
-    // if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+    // Log reading serial
+    else if(address == 0xFF01 || address == 0xFF02) logger->log("Warning: Reading serial at address " + intToHex(address));
+
+    // Log reading timer
+    else if(address >= 0xFF04 && address <= 0xFF07) {
+        logger->log("Warning: Reading timer at address " + intToHex(address));
+        // this->gameboy->stop();
+    }
+
+     // Log warning if reading interrupts infos
+    else if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+
+    // Log reading sound
+    else if(address >= 0xFF10 && address <= 0xFF3F) logger->log("Warning: Reading sound at address " + intToHex(address));
 
     // Log if reading LCD status
-    // else if(address >= 0xFF40 && address <= 0xFF45) logger->log("Warning: Reading LCD infos at address " + intToHex(address));
+    else if(address >= 0xFF40 && address <= 0xFF4B) logger->log("Warning: Reading LCD status at address " + intToHex(address));
+
+    // Log if reading to select VRAM bank
+    else if(address == 0xFF4F) logger->log("Warning: Writing to select VRAM bank at address " + intToHex(address));
+
+    // Log if reading to boot ROM enable
+    else if(address == 0xFF50) logger->log("Warning: Writing to boot ROM enable at address " + intToHex(address));
+
+    // Log if reading to VRAM DMA
+    else if(address >= 0xFF51 && address <= 0xFF55) logger->log("Warning: Writing to VRAM DMA at address " + intToHex(address));
+
+    // Log if reading to BG / OBJ palette
+    else if(address >= 0xFF68 && address <= 0xFF6B) logger->log("Warning: Writing to BG / OBJ palette at address " + intToHex(address));    
+
+    // Log if reading to WRAM bank select
+    else if(address == 0xFF70) logger->log("Warning: Writing to WRAM bank select at address " + intToHex(address));
     
     // Log warning if accessing other IOs
-    // else logger->warning("Warning: Accessing IO at address " + intToHex(address));
+    else logger->warning("Warning: Accessing IO at address " + intToHex(address));
 
     return this->io[address - IO_OFFSET];
 }
