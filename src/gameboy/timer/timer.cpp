@@ -26,8 +26,6 @@ Timer::Timer(Gameboy& gameboy) : gameboy(gameboy), dividerCounter(0), timerCount
 
 Timer::~Timer() {
     logger->log("Timer Destructor");
-
-    delete logger;
 }
 
 /*
@@ -122,11 +120,11 @@ void Timer::updateTimer(uint8_t cycles) {
         this->timerCounter -= frequency;
 
         // Increment timer
-        if(this->timerModulo == 0xFF) {
-            this->timerCounter = 0;
+        if (this->timerCounter == 0xFF) {
+            this->timerCounter = this->timerModulo;
             this->gameboy.cpu->triggerInterrupt(Interrupt::Timer);
         } else {
-            this->timerModulo++;
+            this->timerCounter++;
         }
     }
 }
@@ -134,10 +132,7 @@ void Timer::updateTimer(uint8_t cycles) {
 void Timer::checkAndTriggerInterrupt() {
     // Check if timer interrupt is enabled
     if(this->timerControl & 0x04) {
-        // Check if timer overflow interrupt is enabled
-        if(this->timerControl & 0x40) {
-            // Trigger timer interrupt
-            this->gameboy.cpu->triggerInterrupt(Interrupt::Timer);
-        }
+        // Trigger timer interrupt
+        this->gameboy.cpu->triggerInterrupt(Interrupt::Timer);
     }
 }
