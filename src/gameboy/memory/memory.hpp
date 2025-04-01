@@ -25,6 +25,8 @@ class Gameboy;
 #define WRAM_FIXED 5
 #define WRAM_BANKED 6
 
+#define ECHO_RAM 10
+
 #define OAM 7
 
 #define IO 8
@@ -44,16 +46,20 @@ class Gameboy;
 #define WRAM_FIXED_SIZE 4096
 #define WRAM_BANKED_SIZE 4096
 
+#define ECHO_RAM_SIZE 7680
+
 #define OAM_SIZE 160
+
+#define NO_RAM_SIZE 96
 
 #define IO_SIZE 128
 
-#define HRAM_SIZE 128
+#define HRAM_SIZE 127
 
 // Memory block offsets
 #define BOOTROM_OFFSET 0x0000 // 0x0000 - 0x00FF, boot ROM overlapps with the first 256 bytes of the fixed ROM
 
-#define ROM_FIXED_OFFSET 0x0000 // First 256 bytes are ignored
+#define ROM_FIXED_OFFSET 0x0000
 #define ROM_BANKED_OFFSET 0x4000
 
 #define VRAM_OFFSET 0x8000
@@ -63,7 +69,11 @@ class Gameboy;
 #define WRAM_FIXED_OFFSET 0xC000
 #define WRAM_BANKED_OFFSET 0xD000
 
+#define ECHO_RAM_OFFSET 0xE000
+
 #define OAM_OFFSET 0xFE00
+
+#define NO_RAM_OFFSET 0xFEA0 // 0xFEA0 - 0xFEFF, not usable
 
 #define IO_OFFSET 0xFF00
 
@@ -78,7 +88,7 @@ class Memory {
         char& fetch8(const uint16_t &address);
 
         // ROM load functions
-        void loadRom(const int &memoryBlock, const int &startAdress, const string &bootromPath, const int &size);
+        void loadRom(const int &memoryBlock, const string &bootromPath, const int readOffset, const int &size);
 
     private:
         // Gameboy ref
@@ -100,9 +110,15 @@ class Memory {
 
         char oam[OAM_SIZE]; // 160B
 
+        char noRam[NO_RAM_SIZE]; // 96B
+
         char io[IO_SIZE]; // 128B
 
-        char hram[HRAM_SIZE]; // 128B
+        char hram[HRAM_SIZE]; // 127B
+
+        char interruptEnable; // Interrupt enable register
+
+        void preloadValues(); // Preload values in memory
 
         char& fetchIOs(const uint16_t &address); // Fetch 8-bit value from IO memory
 };
