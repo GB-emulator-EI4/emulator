@@ -9,6 +9,7 @@ using namespace std;
 #include "../../constants/constants.hpp"
 #include "../logging/logger/logger.hpp"
 #include "../utils/utils.hpp"
+#include "../timer/timer.hpp"
 
 #include "memory.hpp"
 
@@ -18,9 +19,11 @@ using namespace std;
 
 */
 
-Memory::Memory() : bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram() {
+
+Memory::Memory(Gameboy* gameboy) : gameboy(gameboy), bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram() {
     logger = Logger::getInstance()->getLogger("Memory");
     logger->log("Memory Constructor");
+
 }
 
 Memory::~Memory() {
@@ -131,6 +134,27 @@ char& Memory::fetch8(const uint16_t &address) {
 char& Memory::fetchIOs(const uint16_t &address) {
     // TODO add better filter and log / warning for IOs reading, seprate log for controller, timers, lcd ...
 
+    // just logging timer reg access and freq values
+    if(address - IO_OFFSET == DIVIDER_REGISTER) {
+        logger->log("Reading divider register at addr " + intToHex(address));
+        logger->log("Divider Register Value: " + to_string(timer->getDividerRegister()));
+    }
+
+    else if(address - IO_OFFSET == TIMER_COUNTER) {
+        logger->log("Reading timer counter at addr " + intToHex(address));
+        logger->log("Timer Counter Value: " + to_string(timer->getTimerCounter()));
+    }
+
+    else if(address - IO_OFFSET == TIMER_MODULO) {
+        logger->log("Reading timer modulo at addr " + intToHex(address));
+        logger->log("Timer Modulo Value: " + to_string(timer->getTimerModulo()));
+    }
+
+    else if(address - IO_OFFSET == TIMER_CONTROL) {
+        logger->log("Reading timer control at addr " + intToHex(address));
+        logger->log("Timer Control Value: " + to_string(timer->getTimerControl()));
+    }
+    
     // Log warning if reading interrupts infos
     // if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
 

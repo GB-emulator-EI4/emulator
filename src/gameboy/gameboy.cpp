@@ -30,7 +30,7 @@ Gameboy* Gameboy::instance = nullptr;
 
 */
 
-Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), ppu(new PPU(this)), running(true), cyclesCounter(0), Mcycles(0), Tcycles(0) {
+Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), ppu(new PPU(this)), timer(new Timer(this)) ,running(true), cyclesCounter(0), Mcycles(0), Tcycles(0) {
     logger = Logger::getInstance()->getLogger("Gameboy");
     logger->log("Gameboy Constructor");
 }
@@ -44,6 +44,7 @@ Gameboy::~Gameboy() {
     delete memory;
     delete ppu;
     delete logger;
+    delete timer;
 }
 
 /*

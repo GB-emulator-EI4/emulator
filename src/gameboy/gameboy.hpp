@@ -12,11 +12,13 @@ using namespace std;
 #include "utils/utils.hpp"
 #include "ppu/ppu.hpp"
 #include "sdl/sdl.hpp"
+#include "timer/timer.hpp"
 
 // Forward declaration
 class CPU;
 class Memory;
 class PPU;
+class Timer;
 
 class Gameboy {
     public:
@@ -30,7 +32,8 @@ class Gameboy {
         CPU* cpu;
         Memory* memory;
         PPU* ppu;
-
+        Timer* timer;
+        
         // Renderer
         SDLRenderer* renderer;
         inline void setRenderer(SDLRenderer* renderer) { this->renderer = renderer; }

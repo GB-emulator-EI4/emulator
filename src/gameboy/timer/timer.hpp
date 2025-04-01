@@ -18,7 +18,7 @@ class Timer {
 
     public:
 
-        Timer(Gameboy& gameboy);
+        Timer(Gameboy* gameboy);
         ~Timer();
     
         void reset();
@@ -35,7 +35,7 @@ class Timer {
 
     private:
     
-        Gameboy& gameboy;
+        Gameboy* gameboy;
         uint16_t dividerCounter;
         uint16_t timerCounter;
         uint8_t timerModulo;

@@ -19,7 +19,7 @@ class Gameboy;
 
 */
 
-Timer::Timer(Gameboy& gameboy) : gameboy(gameboy), dividerCounter(0), timerCounter(0), timerModulo(0), timerControl(0), timerClockSelect(0) {
+Timer::Timer(Gameboy* gameboy) : gameboy(gameboy), dividerCounter(0), timerCounter(0), timerModulo(0), timerControl(0), timerClockSelect(0) {
     logger = Logger::getInstance()->getLogger("Timer");
     logger->log("Timer Constructor");
 }
@@ -122,7 +122,7 @@ void Timer::updateTimer(uint8_t cycles) {
         // Increment timer
         if (this->timerCounter == 0xFF) {
             this->timerCounter = this->timerModulo;
-            this->gameboy.cpu->triggerInterrupt(Interrupt::Timer);
+            this->gameboy->cpu->triggerInterrupt(Interrupt::Timer);
         } else {
             this->timerCounter++;
         }
@@ -133,6 +133,6 @@ void Timer::checkAndTriggerInterrupt() {
     // Check if timer interrupt is enabled
     if(this->timerControl & 0x04) {
         // Trigger timer interrupt
-        this->gameboy.cpu->triggerInterrupt(Interrupt::Timer);
+        this->gameboy->cpu->triggerInterrupt(Interrupt::Timer);
     }
 }
