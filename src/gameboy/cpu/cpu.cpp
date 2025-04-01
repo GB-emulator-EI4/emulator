@@ -569,7 +569,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("CALL NZ, n16 with address " + intToHex(address));
 
             this->pc += 3;
-            return this->CALLC(address, this->getZero());
+            return this->CALLN(address, this->getZero());
         } break;
 
         case 0xC5: { // PUSH rr
@@ -626,6 +626,18 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc += 3;
             return this->JPS(address, this->getZero());
+        } break;
+
+
+        case 0xCC: { // CALL Z, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("CALL Z, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->CALLS(address, this->getZero());
         } break;
 
         case 0xCD: { // CALL n16
@@ -690,6 +702,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->JPN(address, this->getCarry());
         }
 
+        case 0xD4: { // CALL NC, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("CALL NC, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->CALLN(address, this->getCarry());
+        } break;
+
         case 0xD5: { // PUSH DE
             logger->log("PUSH DE");
 
@@ -745,6 +768,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc += 3;
             return this->JPS(address, this->getCarry());
+        } break;
+
+        case 0xDC: { // CALL C, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("CALL C, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->CALLS(address, this->getCarry());
         } break;
 
         case 0xDE: { // SBC A, n8
@@ -1554,13 +1588,20 @@ void CPU::CALL(const uint16_t &adr) {
     this->pc = adr;
 }
 
-void CPU::CALLC(const uint16_t &adr, const uint8_t &flag) {
-    if(flag == 1) {
+void CPU::CALLN(const uint16_t &adr, const uint8_t &flag) {
+    if(flag == 0) {
         this->PUSH(this->pc >> 8, this->pc & 0xFF);
         this->pc = adr;
     }
 }
 
+
+void CPU::CALLS(const uint16_t &adr, const uint8_t &flag) {
+    if(flag == 1) {
+        this->PUSH(this->pc >> 8, this->pc & 0xFF);
+        this->pc = adr;
+    }
+}
 /*
 
     RET

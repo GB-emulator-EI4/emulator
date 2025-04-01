@@ -142,7 +142,8 @@ class CPU {
 
         // CALL
         void CALL(const uint16_t &adr);
-        void CALLC(const uint16_t &adr, const uint8_t &flag);
+        void CALLN(const uint16_t &adr, const uint8_t &flag);
+        void CALLS(const uint16_t &adr, const uint8_t &flag);
 
         // RET
         void RET();
