@@ -1675,7 +1675,7 @@ void CPU::RLA() {
 */
 
 void CPU::RLCA() {
-    // Rotate a left
+    // RLCA: Rotate left circular TODO check if this is correct
     const uint8_t carry = this->a & 0x80;
     this->resetCarry();
 

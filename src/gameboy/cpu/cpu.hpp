@@ -157,6 +157,9 @@ class CPU {
         // RLA
         void RLA();
 
+        //RLCA
+        void RLCA();
+
         // SWAP
         void SWAP(uint8_t &r);
 
