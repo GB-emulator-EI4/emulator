@@ -34,6 +34,8 @@ CPU::~CPU() {
 void CPU::cycle() {
     logger->log("CPU Cycle, PC: " + intToHex(this->pc));
 
+    this->checkInterrupts();
+
     // Fetch the next instruction
     const uint8_t& opcode = this->fetch();
 
@@ -47,6 +49,46 @@ void CPU::cycle() {
 
     // Decode and execute the instruction
     return this->decodeAndExecute(opcode);
+}
+
+void CPU::checkInterrupts() {
+    // Check if an interrupt is pending and execute it
+    if(this->ime) {
+        // Read IF interrupt flag memory
+        uint8_t& ifRegister = (uint8_t&) this->gameboy->memory->fetch8(0xFF0F);
+
+        // Read IE interrupt enable memory
+        uint8_t& ieRegister = (uint8_t&) this->gameboy->memory->fetch8(0xFFFF);
+
+        // Check if any interrupt is pending
+        for(uint8_t i = 0; i < 5; i++) {
+            // Check if the interrupt is enabled
+            if((ieRegister & (1 << i)) && (ifRegister & (1 << i))) {
+                // Clear the interrupt flag
+                ifRegister &= ~(1 << i);
+
+                // Set the interrupt master enable flag to 0
+                this->ime = 0;
+
+                // Push the current program counter to the stack
+                this->PUSH(this->pc >> 8, this->pc & 0xFF);
+
+                // Set the program counter to the interrupt vector address
+                switch(i) {
+                    case 0: this->pc = 0x0040; break; // VBLANK
+                    case 1: this->pc = 0x0048; break; // LCDC
+                    case 2: this->pc = 0x0050; break; // TIMER
+                    case 3: this->pc = 0x0058; break; // SERIAL
+                    case 4: this->pc = 0x0060; break; // JOYPAD
+                }
+
+                // Log the interrupt
+                *logger << "Interrupt " + to_string(i) + " triggered, PC: " + intToHex(this->pc) + ", IF: " + intToHex(ifRegister) + ", IE: " + intToHex(ieRegister);
+                
+                return;
+            }
+        }
+    }
 }
 
 const uint8_t& CPU::fetch() const {
@@ -107,14 +149,16 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             } break;
 
             case 0x7: {
-                if(low <= 0x7) { // LD [HL] r
-                    uint16_t address = (this->h << 8) + this->l;
-
-                    logger->log("LD [HL] r with r: " + intToHex(r2) + ", at address: " + intToHex(address));
-                    return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), r2);
-                } else { // LD A r
-                    logger->log("LD A r with r: " + intToHex(r2));
-                    return this->LD(this->a, r2);
+                if(low != 6) {
+                    if(low <= 0x7) { // LD [HL] r
+                        uint16_t address = (this->h << 8) + this->l;
+    
+                        logger->log("LD [HL] r with r: " + intToHex(r2) + ", at address: " + intToHex(address));
+                        return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), r2);
+                    } else { // LD A r
+                        logger->log("LD A r with r: " + intToHex(r2));
+                        return this->LD(this->a, r2);
+                    }
                 }
             } break;
         }
@@ -453,6 +497,20 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             0xCx instructions
         */
 
+        case 0xC0: { // RET NZ
+            logger->log("RET NZ");
+
+            // Check if the zero flag is not set
+            if(this->getZero() == 0) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Zero flag is set, skipping RET NZ");
+                this->pc += 2;
+                return;
+            }
+        } break;
+
         case 0xC1: { // POP BC
             logger->log("POP BC");
 
@@ -518,8 +576,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC8: { // RET Z
             logger->log("RET Z");
 
-            this->pc++;
-            return this->RET();
+            // Check if the zero flag is set
+            if(this->getZero() == 1) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Zero flag is not set, skipping RET Z");
+                this->pc += 2;
+                return;
+            }
+
+            return;
         } break;
 
         case 0xC9: { // RET
@@ -562,8 +629,15 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD0: { // RET NC
             logger->log("RET NC");
 
-            this->pc++;
-            return this->RET();
+            // Check if the carry flag is not set
+            if(this->getCarry() == 0) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Carry flag is set, skipping RET NC");
+                this->pc += 2;
+                return;
+            }
         } break;
 
         case 0xD1: { // POP DE
@@ -597,6 +671,23 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
         case 0xD8: { // RET C
             logger->log("RET C");
+
+            // Check if the carry flag is set
+            if(this->getCarry() == 1) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Carry flag is not set, skipping RET C");
+                this->pc += 2;
+                return;
+            }
+        } break;
+
+        case 0xD9: { // RETI
+            logger->log("RETI");
+
+            // Set the interrupt master enable flag to 1
+            this->ime = 1;
 
             this->pc++;
             return this->RET();
@@ -728,7 +819,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("DI");
             this->pc++;
 
-            // TODO
+            this->ime = 0;
             return;
         } break;
 
@@ -777,7 +868,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("EI");
             this->pc++;
 
-            // TODO
+            this->ime = 1;
             return;
         } break;
 
@@ -1583,9 +1674,6 @@ void CPU::disableInterrupt(const Interrupt interrupt) {
 
 void CPU::triggerInterrupt(const Interrupt interrupt) {
     this->gameboy->memory->fetch8(0xFF0F) |= (uint8_t) interrupt;
-
-    *logger << "Triggering interrupt: " + intToHex(interrupt) + ", PC: " + intToHex(this->pc);
-    this->gameboy->pause();
 }
 
 void CPU::clearInterrupt(const Interrupt interrupt) {

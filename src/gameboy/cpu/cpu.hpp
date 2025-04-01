@@ -63,6 +63,10 @@ class CPU {
         // Registers
         uint8_t a, f, b, c, d, e, h, l; // 8-bit registers
         uint16_t sp, pc; // 16-bit registers
+        uint8_t ime; // 8-bit interrupt master enable flag
+
+        // Interrupts
+        void checkInterrupts(); // Check if an interrupt is pending and execute it
 
         // Execution steps
         const uint8_t& fetch() const; // Fetch the next instruction
