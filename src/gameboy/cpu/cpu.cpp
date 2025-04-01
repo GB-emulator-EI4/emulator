@@ -617,6 +617,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->RET();
         } break;
 
+        case 0xCA: { // JP Z, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP Z, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->JPS(address, this->getZero());
+        } break;
+
         case 0xCD: { // CALL n16
             const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
@@ -668,6 +679,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->POP(this->d, this->e);
         } break;
 
+        case 0xD2:{ // JP NC, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP NC, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->JPN(address, this->getCarry());
+        }
+
         case 0xD5: { // PUSH DE
             logger->log("PUSH DE");
 
@@ -712,6 +734,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc++;
             return this->RET();
+        } break;
+
+        case 0xDA: { // JP C, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP C, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->JPS(address, this->getCarry());
         } break;
 
         case 0xDE: { // SBC A, n8
@@ -775,6 +808,14 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc = 0x20;
             return;
+        } break;
+
+        case 0xE8: { // ADD SP, e8
+            const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            logger->log("ADD SP, e8 with value " + intToHex(e8));
+
+            this->pc += 2;
+            return this->ADD(this->sp, e8);
         } break;
 
         case 0xE9: { // JP HL
@@ -865,6 +906,14 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc = 0x30;
             return;
+        } break;
+
+        case 0xF8: { // LD HL, SP + e8
+            const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            logger->log("LD HL, SP + e8 with value " + intToHex(e8));
+
+            this->pc += 2;
+            return this->LD(this->h, this->l, this->sp + e8);
         } break;
 
         case 0xF9: { // LD SP, HL
@@ -1091,15 +1140,11 @@ void CPU::JPN(const uint16_t& address, const uint8_t& flag) { // 0xC2, 0xD2 -> j
     if(flag == 0) this->pc = address;
 }
 
-/*
-
-    LD 8 bits, 16 bits
-
-*/
-
-void CPU::LD(uint8_t &r1, const uint8_t &r2) {
-    r1 = r2;
+void CPU::JPS(const uint16_t& address, const uint8_t& flag) { // 0xCA, 0xDA -> jump to address if z flag, c flag SET respectively
+    if(flag == 1) this->pc = address;
 }
+
+
 
 /*
 
@@ -1128,6 +1173,21 @@ void CPU::ADD(uint8_t &r1, const uint8_t &r2) {
 
     if(r1 == 0) this->setZero();
     else this->resetZero();
+
+    if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 < r2) this->setCarry();
+    else this->resetCarry();
+}
+
+
+void CPU::ADD(uint16_t &r1, const int8_t &r2) {
+    // Add r2 to r1
+    const uint16_t result = r1 + r2;
+    r1 = result;
+
+    this->resetSub();
 
     if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -1429,10 +1489,13 @@ void CPU::CPL() {
 
 /*
 
-    LD
+    LD 8 bits, 16 bits
 
 */
 
+void CPU::LD(uint8_t &r1, const uint8_t &r2) {
+    r1 = r2;
+}
 void CPU::LD(uint16_t &r1, const uint8_t &r3, const uint8_t &r4) { // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
     r1 = ((uint16_t) r3 << 8) + r4;
 }
@@ -1440,6 +1503,12 @@ void CPU::LD(uint16_t &r1, const uint8_t &r3, const uint8_t &r4) { // 0x01, 0x11
 void CPU::LD(uint8_t& r1, uint8_t& r2, const uint8_t& r3, const uint8_t& r4) { // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
     r1 = r3;
     r2 = r4;
+}
+
+
+void CPU::LD(uint8_t& r1, uint8_t& r2, const uint16_t& r3) {
+    r1 = (r3 >> 8) & 0xFF; 
+    r2 = r3 & 0xFF;
 }
 
 /*
