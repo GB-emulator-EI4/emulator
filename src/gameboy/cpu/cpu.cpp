@@ -379,7 +379,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return;
         } break;
 
-        case 0x7: { // RLCA
+        case 0x07: { // RLCA
             logger->log("RLCA");
             this->pc++;
 
@@ -394,7 +394,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->LD(adr_msb, adr_lsb, this->sp >> 8, this->sp & 0xFF);
         } break;
 
-        case 0x9: { // ADD HL, BC
+        case 0x09: { // ADD HL, BC
             logger->log("ADD HL, BC");
             this->pc++;
 
@@ -451,6 +451,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->JRN(e8, this->getZero());
         } break;
 
+        case 0x27: { // DAA
+            logger->log("DAA");
+            this->pc++;
+
+            return this->DAA();
+        } break;
+
         case 0x28: { // JR Z, e8
             const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             logger->log("JR Z, e8 with value " + intToHex(e8));
@@ -485,12 +492,26 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->JRN(e8, this->getCarry());
         } break;
 
+        case 0x37: { // SCF
+            logger->log("SCF");
+            this->pc++;
+
+            return this->SCF();
+        } break;
+
         case 0x38: { // JR C, e8
             const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             logger->log("JR C, e8 with value " + intToHex(e8));
 
             this->pc += 2;
             return this->JRS(e8, this->getCarry());
+        } break;
+
+        case 0x39: { // ADD HL, SP
+            logger->log("ADD HL, SP");
+            this->pc++;
+
+            return this->ADD(this->h, this->l, this->sp >> 8, this->sp & 0xFF);
         } break;
 
         /*
@@ -1534,6 +1555,23 @@ void CPU::RLA() {
     if(this->a & 0x80) this->setCarry();
 
     this->a = (this->a << 1) + carry;
+}
+
+
+/*
+
+    RLCA
+
+*/
+
+void CPU::RLCA() {
+    // Rotate a left
+    const uint8_t carry = this->a & 0x80;
+    this->resetCarry();
+
+    if(carry) this->setCarry();
+
+    this->a = (this->a << 1) + (carry >> 7);
 }
 
 /*
