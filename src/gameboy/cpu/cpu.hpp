@@ -63,6 +63,10 @@ class CPU {
         // Registers
         uint8_t a, f, b, c, d, e, h, l; // 8-bit registers
         uint16_t sp, pc; // 16-bit registers
+        uint8_t ime; // 8-bit interrupt master enable flag
+
+        // Interrupts
+        void checkInterrupts(); // Check if an interrupt is pending and execute it
 
         // Execution steps
         const uint8_t& fetch() const; // Fetch the next instruction
@@ -82,15 +86,18 @@ class CPU {
         // JUMP
         void JRN(const int8_t& e8, const uint8_t& flag); // 0x20, 0x30
         void JRS(const int8_t& e8, const uint8_t& flag); // 0x18, 0x28
-        void JPN(const uint16_t& adr, const uint8_t& flag); // 0xC2, 0xCA, 0xD2, 0xDA
+        void JPN(const uint16_t& adr, const uint8_t& flag); // 0xC2, 0xD2, 0xDA
+        void JPS(const uint16_t& address, const uint8_t& flag); //0xCA, 0xDA
 
         // LD
         void LD(uint8_t& r1, const uint8_t& r2);
+        void LD(uint8_t& r1, uint8_t& r2, const uint16_t& r3);
         void LD(uint16_t& r1, const uint8_t& r3, const uint8_t& r4);
         void LD(uint8_t& r1, uint8_t& r2, const uint8_t& r3, const uint8_t& r4); // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
 
         // ADD, ADDC
         void ADD(uint8_t &r1, const uint8_t &r2);
+        void ADD(uint16_t &r1, const int8_t &r2);
         void ADDC(uint8_t &r1, const uint8_t &r2);
         void ADD(uint8_t &r1, uint8_t &r2, const uint8_t &r3, const uint8_t &r4);
 
@@ -135,7 +142,8 @@ class CPU {
 
         // CALL
         void CALL(const uint16_t &adr);
-        void CALLC(const uint16_t &adr, const uint8_t &flag);
+        void CALLN(const uint16_t &adr, const uint8_t &flag);
+        void CALLS(const uint16_t &adr, const uint8_t &flag);
 
         // RET
         void RET();
@@ -148,6 +156,9 @@ class CPU {
 
         // RLA
         void RLA();
+
+        //RLCA
+        void RLCA();
 
         // SWAP
         void SWAP(uint8_t &r);

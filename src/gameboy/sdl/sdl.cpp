@@ -114,9 +114,6 @@ void SDLRenderer::handleEvents() {
 
         // Key down events
         if (e.type == SDL_KEYDOWN) {
-            // if (e.type = SDL_QUIT){
-            //     this->gameboy->stop();
-            // }
             switch (e.key.keysym.sym) {
                 //esc key
                 case SDLK_ESCAPE:
@@ -127,36 +124,42 @@ void SDLRenderer::handleEvents() {
                 case SDLK_SPACE:
                     this->gameboy->stop();
                     break;
+                    
                 // Direction keys
                 case SDLK_DOWN:    // DOWN
-                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x08; 
+                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x08;
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
                 case SDLK_UP:  // UP
                     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x04; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
                 case SDLK_LEFT:  // Left
                     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x02; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
                 case SDLK_RIGHT: // Right
                     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x01; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
 
                 // Action keys
                 case SDLK_RETURN: // Start button
                     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x08; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
                 case SDLK_s:     // Select button
                     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x04; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
                 case SDLK_x:     // B button
                     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x02; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;    
                 case SDLK_z:     // A button
                     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x01; 
+                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
                     break;
-
-
-
             }
         }
         
@@ -188,7 +191,7 @@ void SDLRenderer::handleEvents() {
                     if (!(joypadRegister & 0x20)) joypadRegister |= 0x02;
                     break;
                 case SDLK_z:     // A button
-                if (!(joypadRegister & 0x20)) joypadRegister |= 0x01;
+                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x01;
                 break;
             }
         }

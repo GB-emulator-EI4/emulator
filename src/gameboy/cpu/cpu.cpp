@@ -34,6 +34,8 @@ CPU::~CPU() {
 void CPU::cycle() {
     logger->log("CPU Cycle, PC: " + intToHex(this->pc));
 
+    this->checkInterrupts();
+
     // Fetch the next instruction
     const uint8_t& opcode = this->fetch();
 
@@ -47,6 +49,46 @@ void CPU::cycle() {
 
     // Decode and execute the instruction
     return this->decodeAndExecute(opcode);
+}
+
+void CPU::checkInterrupts() {
+    // Check if an interrupt is pending and execute it
+    if(this->ime) {
+        // Read IF interrupt flag memory
+        uint8_t& ifRegister = (uint8_t&) this->gameboy->memory->fetch8(0xFF0F);
+
+        // Read IE interrupt enable memory
+        uint8_t& ieRegister = (uint8_t&) this->gameboy->memory->fetch8(0xFFFF);
+
+        // Check if any interrupt is pending
+        for(uint8_t i = 0; i < 5; i++) {
+            // Check if the interrupt is enabled
+            if((ieRegister & (1 << i)) && (ifRegister & (1 << i))) {
+                // Clear the interrupt flag
+                ifRegister &= ~(1 << i);
+
+                // Set the interrupt master enable flag to 0
+                this->ime = 0;
+
+                // Push the current program counter to the stack
+                this->PUSH(this->pc >> 8, this->pc & 0xFF);
+
+                // Set the program counter to the interrupt vector address
+                switch(i) {
+                    case 0: this->pc = 0x0040; break; // VBLANK
+                    case 1: this->pc = 0x0048; break; // LCDC
+                    case 2: this->pc = 0x0050; break; // TIMER
+                    case 3: this->pc = 0x0058; break; // SERIAL
+                    case 4: this->pc = 0x0060; break; // JOYPAD
+                }
+
+                // Log the interrupt
+                *logger << "Interrupt " + to_string(i) + " triggered, PC: " + intToHex(this->pc) + ", IF: " + intToHex(ifRegister) + ", IE: " + intToHex(ieRegister);
+                
+                return;
+            }
+        }
+    }
 }
 
 const uint8_t& CPU::fetch() const {
@@ -107,14 +149,16 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             } break;
 
             case 0x7: {
-                if(low <= 0x7) { // LD [HL] r
-                    uint16_t address = (this->h << 8) + this->l;
-
-                    logger->log("LD [HL] r with r: " + intToHex(r2) + ", at address: " + intToHex(address));
-                    return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), r2);
-                } else { // LD A r
-                    logger->log("LD A r with r: " + intToHex(r2));
-                    return this->LD(this->a, r2);
+                if(low != 6) {
+                    if(low <= 0x7) { // LD [HL] r
+                        uint16_t address = (this->h << 8) + this->l;
+    
+                        logger->log("LD [HL] r with r: " + intToHex(r2) + ", at address: " + intToHex(address));
+                        return this->LD((uint8_t&) this->gameboy->memory->fetch8(address), r2);
+                    } else { // LD A r
+                        logger->log("LD A r with r: " + intToHex(r2));
+                        return this->LD(this->a, r2);
+                    }
                 }
             } break;
         }
@@ -335,7 +379,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return;
         } break;
 
-        case 0x7: { // RLCA
+        case 0x07: { // RLCA
             logger->log("RLCA");
             this->pc++;
 
@@ -350,7 +394,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->LD(adr_msb, adr_lsb, this->sp >> 8, this->sp & 0xFF);
         } break;
 
-        case 0x9: { // ADD HL, BC
+        case 0x09: { // ADD HL, BC
             logger->log("ADD HL, BC");
             this->pc++;
 
@@ -407,6 +451,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->JRN(e8, this->getZero());
         } break;
 
+        case 0x27: { // DAA
+            logger->log("DAA");
+            this->pc++;
+
+            return this->DAA();
+        } break;
+
         case 0x28: { // JR Z, e8
             const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             logger->log("JR Z, e8 with value " + intToHex(e8));
@@ -441,6 +492,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->JRN(e8, this->getCarry());
         } break;
 
+        case 0x37: { // SCF
+            logger->log("SCF");
+            this->pc++;
+
+            return this->SCF();
+        } break;
+
         case 0x38: { // JR C, e8
             const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             logger->log("JR C, e8 with value " + intToHex(e8));
@@ -449,9 +507,30 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->JRS(e8, this->getCarry());
         } break;
 
+        case 0x39: { // ADD HL, SP
+            logger->log("ADD HL, SP");
+            this->pc++;
+
+            return this->ADD(this->h, this->l, this->sp >> 8, this->sp & 0xFF);
+        } break;
+
         /*
             0xCx instructions
         */
+
+        case 0xC0: { // RET NZ
+            logger->log("RET NZ");
+
+            // Check if the zero flag is not set
+            if(this->getZero() == 0) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Zero flag is set, skipping RET NZ");
+                this->pc += 2;
+                return;
+            }
+        } break;
 
         case 0xC1: { // POP BC
             logger->log("POP BC");
@@ -490,7 +569,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("CALL NZ, n16 with address " + intToHex(address));
 
             this->pc += 3;
-            return this->CALLC(address, this->getZero());
+            return this->CALLN(address, this->getZero());
         } break;
 
         case 0xC5: { // PUSH rr
@@ -518,8 +597,17 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC8: { // RET Z
             logger->log("RET Z");
 
-            this->pc++;
-            return this->RET();
+            // Check if the zero flag is set
+            if(this->getZero() == 1) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Zero flag is not set, skipping RET Z");
+                this->pc += 2;
+                return;
+            }
+
+            return;
         } break;
 
         case 0xC9: { // RET
@@ -527,6 +615,29 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc++;
             return this->RET();
+        } break;
+
+        case 0xCA: { // JP Z, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP Z, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->JPS(address, this->getZero());
+        } break;
+
+
+        case 0xCC: { // CALL Z, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("CALL Z, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->CALLS(address, this->getZero());
         } break;
 
         case 0xCD: { // CALL n16
@@ -562,8 +673,15 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD0: { // RET NC
             logger->log("RET NC");
 
-            this->pc++;
-            return this->RET();
+            // Check if the carry flag is not set
+            if(this->getCarry() == 0) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Carry flag is set, skipping RET NC");
+                this->pc += 2;
+                return;
+            }
         } break;
 
         case 0xD1: { // POP DE
@@ -571,6 +689,28 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
 
             this->pc++;
             return this->POP(this->d, this->e);
+        } break;
+
+        case 0xD2:{ // JP NC, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP NC, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->JPN(address, this->getCarry());
+        }
+
+        case 0xD4: { // CALL NC, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("CALL NC, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->CALLN(address, this->getCarry());
         } break;
 
         case 0xD5: { // PUSH DE
@@ -598,8 +738,47 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD8: { // RET C
             logger->log("RET C");
 
+            // Check if the carry flag is set
+            if(this->getCarry() == 1) {
+                this->pc++;
+                return this->RET();
+            } else {
+                logger->log("Carry flag is not set, skipping RET C");
+                this->pc += 2;
+                return;
+            }
+        } break;
+
+        case 0xD9: { // RETI
+            logger->log("RETI");
+
+            // Set the interrupt master enable flag to 1
+            this->ime = 1;
+
             this->pc++;
             return this->RET();
+        } break;
+
+        case 0xDA: { // JP C, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("JP C, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->JPS(address, this->getCarry());
+        } break;
+
+        case 0xDC: { // CALL C, n16
+            const uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            const uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
+            const uint16_t address = ((uint16_t) adr_msb << 8) + adr_lsb;
+
+            logger->log("CALL C, n16 with address " + intToHex(address));
+
+            this->pc += 3;
+            return this->CALLS(address, this->getCarry());
         } break;
 
         case 0xDE: { // SBC A, n8
@@ -665,6 +844,14 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return;
         } break;
 
+        case 0xE8: { // ADD SP, e8
+            const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            logger->log("ADD SP, e8 with value " + intToHex(e8));
+
+            this->pc += 2;
+            return this->ADD(this->sp, e8);
+        } break;
+
         case 0xE9: { // JP HL
             logger->log("JP HL");
 
@@ -728,7 +915,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("DI");
             this->pc++;
 
-            // TODO
+            this->ime = 0;
             return;
         } break;
 
@@ -755,6 +942,14 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return;
         } break;
 
+        case 0xF8: { // LD HL, SP + e8
+            const int8_t& e8 = (int8_t&) this->gameboy->memory->fetch8(this->pc + 1);
+            logger->log("LD HL, SP + e8 with value " + intToHex(e8));
+
+            this->pc += 2;
+            return this->LD(this->h, this->l, this->sp + e8);
+        } break;
+
         case 0xF9: { // LD SP, HL
             logger->log("LD SP, HL");
 
@@ -777,7 +972,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("EI");
             this->pc++;
 
-            // TODO
+            this->ime = 1;
             return;
         } break;
 
@@ -979,15 +1174,11 @@ void CPU::JPN(const uint16_t& address, const uint8_t& flag) { // 0xC2, 0xD2 -> j
     if(flag == 0) this->pc = address;
 }
 
-/*
-
-    LD 8 bits, 16 bits
-
-*/
-
-void CPU::LD(uint8_t &r1, const uint8_t &r2) {
-    r1 = r2;
+void CPU::JPS(const uint16_t& address, const uint8_t& flag) { // 0xCA, 0xDA -> jump to address if z flag, c flag SET respectively
+    if(flag == 1) this->pc = address;
 }
+
+
 
 /*
 
@@ -1016,6 +1207,21 @@ void CPU::ADD(uint8_t &r1, const uint8_t &r2) {
 
     if(r1 == 0) this->setZero();
     else this->resetZero();
+
+    if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
+    else this->resetHalfCarry();
+
+    if(r1 < r2) this->setCarry();
+    else this->resetCarry();
+}
+
+
+void CPU::ADD(uint16_t &r1, const int8_t &r2) {
+    // Add r2 to r1
+    const uint16_t result = r1 + r2;
+    r1 = result;
+
+    this->resetSub();
 
     if(halfCarryOnAddition(r1, r2)) this->setHalfCarry();
     else this->resetHalfCarry();
@@ -1317,10 +1523,13 @@ void CPU::CPL() {
 
 /*
 
-    LD
+    LD 8 bits, 16 bits
 
 */
 
+void CPU::LD(uint8_t &r1, const uint8_t &r2) {
+    r1 = r2;
+}
 void CPU::LD(uint16_t &r1, const uint8_t &r3, const uint8_t &r4) { // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
     r1 = ((uint16_t) r3 << 8) + r4;
 }
@@ -1328,6 +1537,12 @@ void CPU::LD(uint16_t &r1, const uint8_t &r3, const uint8_t &r4) { // 0x01, 0x11
 void CPU::LD(uint8_t& r1, uint8_t& r2, const uint8_t& r3, const uint8_t& r4) { // 0x01, 0x11, 0x21, 0x31 ie load immediate 16 bit value into BC, DE, HL, SP respectivement
     r1 = r3;
     r2 = r4;
+}
+
+
+void CPU::LD(uint8_t& r1, uint8_t& r2, const uint16_t& r3) {
+    r1 = (r3 >> 8) & 0xFF; 
+    r2 = r3 & 0xFF;
 }
 
 /*
@@ -1373,13 +1588,20 @@ void CPU::CALL(const uint16_t &adr) {
     this->pc = adr;
 }
 
-void CPU::CALLC(const uint16_t &adr, const uint8_t &flag) {
-    if(flag == 1) {
+void CPU::CALLN(const uint16_t &adr, const uint8_t &flag) {
+    if(flag == 0) {
         this->PUSH(this->pc >> 8, this->pc & 0xFF);
         this->pc = adr;
     }
 }
 
+
+void CPU::CALLS(const uint16_t &adr, const uint8_t &flag) {
+    if(flag == 1) {
+        this->PUSH(this->pc >> 8, this->pc & 0xFF);
+        this->pc = adr;
+    }
+}
 /*
 
     RET
@@ -1443,6 +1665,23 @@ void CPU::RLA() {
     if(this->a & 0x80) this->setCarry();
 
     this->a = (this->a << 1) + carry;
+}
+
+
+/*
+
+    RLCA
+
+*/
+
+void CPU::RLCA() {
+    // RLCA: Rotate left circular TODO check if this is correct
+    const uint8_t carry = this->a & 0x80;
+    this->resetCarry();
+
+    if(carry) this->setCarry();
+
+    this->a = (this->a << 1) + (carry >> 7);
 }
 
 /*
@@ -1583,9 +1822,6 @@ void CPU::disableInterrupt(const Interrupt interrupt) {
 
 void CPU::triggerInterrupt(const Interrupt interrupt) {
     this->gameboy->memory->fetch8(0xFF0F) |= (uint8_t) interrupt;
-
-    *logger << "Triggering interrupt: " + intToHex(interrupt) + ", PC: " + intToHex(this->pc);
-    this->gameboy->pause();
 }
 
 void CPU::clearInterrupt(const Interrupt interrupt) {

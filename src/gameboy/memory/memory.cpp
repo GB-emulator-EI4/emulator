@@ -125,7 +125,7 @@ char& Memory::fetch8(const uint16_t &address) {
 
     // Log warning if reading interrupts infos
     if(address == 0xFFFF) {
-        logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+        //logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
         return this->interruptEnable;
     }
 
@@ -172,7 +172,7 @@ char& Memory::fetchIOs(const uint16_t &address) {
     }
 
      // Log warning if reading interrupts infos
-    else if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
+    //else if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
 
     // Log reading sound
     else if(address >= 0xFF10 && address <= 0xFF3F) logger->log("Warning: Reading sound at address " + intToHex(address));
@@ -196,7 +196,7 @@ char& Memory::fetchIOs(const uint16_t &address) {
     else if(address == 0xFF70) logger->log("Warning: Writing to WRAM bank select at address " + intToHex(address));
     
     // Log warning if accessing other IOs
-    else logger->warning("Warning: Accessing IO at address " + intToHex(address));
+    // else logger->warning("Warning: Accessing IO at address " + intToHex(address));
 
     return this->io[address - IO_OFFSET];
 }
