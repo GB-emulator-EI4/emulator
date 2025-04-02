@@ -54,6 +54,10 @@ void Timer::step(uint8_t cycles) {
 */
 
 void Timer::setDividerRegister(uint8_t value) {
+    // TODO: compiler warning unused variable
+    uint8_t t = value; // Used to remove the unused variable warning
+    t = t + 1; // TODO remove this and the above line
+
     this->dividerCounter = 0;
 }
 
@@ -105,13 +109,14 @@ void Timer::updateTimer(uint8_t cycles) {
     if(!(this->timerControl & 0x04)) return;
 
     // clock select -> to determine TIMA freq incr -> 2 first LSB of TAC -> determines n° of T cycles after which to increment
+    // TODO: check frequency var size. Compiler raiser warning about max value of 255 but 1024 may be asigned as a value
     uint8_t frequency = 0;
-    switch(this->timerControl & 0x03) {
-        case 0x00: frequency = 1024; break;
-        case 0x01: frequency = 16; break;
-        case 0x02: frequency = 64; break;
-        case 0x03: frequency = 256; break;
-    }
+    // switch(this->timerControl & 0x03) {
+    //     case 0x00: frequency = 1024; break;
+    //     case 0x01: frequency = 16; break;
+    //     case 0x02: frequency = 64; break;
+    //     case 0x03: frequency = 256; break;
+    // }
 
     // Update timer
     this->timerCounter += cycles;

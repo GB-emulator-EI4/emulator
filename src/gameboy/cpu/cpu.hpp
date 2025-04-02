@@ -174,6 +174,10 @@ class CPU {
 
         // RES
         void RES(const uint8_t &bit, uint8_t &r);
+
+        // RST
+        void RST(const uint8_t &adr); 
+
         /*
         
             Prefixed instructions

@@ -590,8 +590,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC7: { // RST 00
             logger->log("RST 00");
 
-            this->pc = 0x00;
-            return;
+            return this->RST(0x00);
         } break;
 
         case 0xC8: { // RET Z
@@ -662,8 +661,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xCF: { // RST 08
             logger->log("RST 08");
 
-            this->pc = 0x08;
-            return;
+            return this->RST(0x08);
         } break;
 
         /*
@@ -731,8 +729,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD7: { // RST 10
             logger->log("RST 10");
 
-            this->pc = 0x10;
-            return;
+            return this->RST(0x10);
         } break;
 
         case 0xD8: { // RET C
@@ -792,8 +789,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xDF: { // RST 18
             logger->log("RST 18");
 
-            this->pc = 0x18;
-            return;
+            return this->RST(0x18);
         } break;
 
         /*
@@ -840,8 +836,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xE7: { // RST 20
             logger->log("RST 20");
 
-            this->pc = 0x20;
-            return;
+            return this->RST(0x20);
         } break;
 
         case 0xE8: { // ADD SP, e8
@@ -881,8 +876,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xEF: { // RST 28
             logger->log("RST 28");
 
-            this->pc = 0x28;
-            return;
+            return this->RST(0x28);
         } break;
 
         /*
@@ -938,8 +932,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xF7: { // RST 30
             logger->log("RST 30");
 
-            this->pc = 0x30;
-            return;
+            return this->RST(0x30);
         } break;
 
         case 0xF8: { // LD HL, SP + e8
@@ -987,8 +980,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xFF: { // RST 38
             logger->log("RST 38");
 
-            this->pc = 0x38;
-            return;
+            return this->RST(0x38);
         } break;
     }
 
@@ -1764,6 +1756,22 @@ void CPU::RR(uint8_t &r) {
 void CPU::RES(const uint8_t &bit, uint8_t &r) {
     // Reset bit in r
     r &= ~(1 << bit);
+}
+
+/*
+
+    RST
+
+*/
+
+void CPU::RST(const uint8_t &adr) {
+    this->pc ++;
+
+    // Push the current program counter onto the stack
+    this->PUSH(this->pc >> 8, this->pc & 0xFF);
+
+    // Set the program counter to the address of the RST instruction
+    this->pc = (uint16_t) adr;
 }
 
 /*
