@@ -77,11 +77,16 @@ class Gameboy;
 
 #define IO_OFFSET 0xFF00
 
+#define DIVIDER_REGISTER 0x04 // + io offset
+#define TIMER_COUNTER 0x05
+#define TIMER_MODULO 0x06
+#define TIMER_CONTROL 0x07
+
 #define HRAM_OFFSET 0xFF80
 
 class Memory {
     public:
-        Memory();
+        Memory(Gameboy* gameboy);
         ~Memory();
 
         // Memory read function, fetch 8-bit value from memory
@@ -95,6 +100,8 @@ class Memory {
         Gameboy* gameboy;
 
         Log* logger;
+
+        Timer* timer;
 
         char bootrom[BOOTROM_SIZE]; // 256B
 
