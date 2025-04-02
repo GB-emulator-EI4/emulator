@@ -99,24 +99,103 @@ void SDLRenderer::render(const FrameBuffer &framebuffer) {
 
 void SDLRenderer::handleEvents() {
     SDL_Event e;
+    // up -> up arrow on qwerty
+    // down -> down arrow on qwerty
+    // left -> left arrow on qwerty
+    // right -> right arrow on qwerty
 
+    // a -> z on qwerty
+    // b -> x on qwerty
+    // start -> enter on qwerty
+    // select -> s on qwerty
     while(SDL_PollEvent(&e)) {
-        if(e.type == SDL_QUIT) {
-            this->gameboy->stop();
-        }
+        // Joypad input handling
+        uint8_t& joypadRegister = (uint8_t&)this->gameboy->memory->fetch8(0xFF00);
 
-        // Check ESC key
-        else if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
-            runMinishell = false;
-            this->gameboy->stop();
-        }
+        // Key down events
+        if (e.type == SDL_KEYDOWN) {
+            // if (e.type = SDL_QUIT){
+            //     this->gameboy->stop();
+            // }
+            switch (e.key.keysym.sym) {
+                //esc key
+                case SDLK_ESCAPE:
+                    runMinishell = false;
+                    this->gameboy->stop();
+                    break;
+                //space bar
+                case SDLK_SPACE:
+                    this->gameboy->stop();
+                    break;
+                // Direction keys
+                case SDLK_DOWN:    // DOWN
+                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x08; 
+                    break;
+                case SDLK_UP:  // UP
+                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x04; 
+                    break;
+                case SDLK_LEFT:  // Left
+                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x02; 
+                    break;
+                case SDLK_RIGHT: // Right
+                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x01; 
+                    break;
 
-        // Check space bar
-        else if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-            this->gameboy->stop();
+                // Action keys
+                case SDLK_RETURN: // Start button
+                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x08; 
+                    break;
+                case SDLK_s:     // Select button
+                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x04; 
+                    break;
+                case SDLK_x:     // B button
+                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x02; 
+                    break;    
+                case SDLK_z:     // A button
+                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x01; 
+                    break;
+
+
+
+            }
+        }
+        
+        // Key up events
+        if (e.type == SDL_KEYUP) {
+            switch (e.key.keysym.sym) {
+                // Direction keys
+                case SDLK_DOWN:
+                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x08;
+                    break;
+                case SDLK_UP:
+                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x04;
+                    break;
+                case SDLK_LEFT:
+                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x02;
+                    break;
+                case SDLK_RIGHT:
+                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x01;
+                    break;
+
+                // Action keys
+                case SDLK_RETURN: // Start button
+                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x08;
+                    break;
+                case SDLK_s:     // Select button
+                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x04;
+                    break;
+                case SDLK_x:     // B button
+                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x02;
+                    break;
+                case SDLK_z:     // A button
+                if (!(joypadRegister & 0x20)) joypadRegister |= 0x01;
+                break;
+            }
         }
     }
 }
+
+
 
 void SDLRenderer::cleanup() {
     if (texture) {

@@ -54,12 +54,12 @@ class Gameboy;
 
 #define IO_SIZE 128
 
-#define HRAM_SIZE 128
+#define HRAM_SIZE 127
 
 // Memory block offsets
 #define BOOTROM_OFFSET 0x0000 // 0x0000 - 0x00FF, boot ROM overlapps with the first 256 bytes of the fixed ROM
 
-#define ROM_FIXED_OFFSET 0x0000 // First 256 bytes are ignored
+#define ROM_FIXED_OFFSET 0x0000
 #define ROM_BANKED_OFFSET 0x4000
 
 #define VRAM_OFFSET 0x8000
@@ -121,7 +121,11 @@ class Memory {
 
         char io[IO_SIZE]; // 128B
 
-        char hram[HRAM_SIZE]; // 128B
+        char hram[HRAM_SIZE]; // 127B
+
+        char interruptEnable; // Interrupt enable register
+
+        void preloadValues(); // Preload values in memory
 
         char& fetchIOs(const uint16_t &address); // Fetch 8-bit value from IO memory
 };

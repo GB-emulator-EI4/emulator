@@ -335,12 +335,26 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return;
         } break;
 
+        case 0x7: { // RLCA
+            logger->log("RLCA");
+            this->pc++;
+
+            return this->RL(this->a);
+        } break;
+
         case 0x08: { // LD [n16], SP
             uint8_t& adr_lsb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 1);
             uint8_t& adr_msb = (uint8_t&) this->gameboy->memory->fetch8(this->pc + 2);
 
             this->pc += 3;
             return this->LD(adr_msb, adr_lsb, this->sp >> 8, this->sp & 0xFF);
+        } break;
+
+        case 0x9: { // ADD HL, BC
+            logger->log("ADD HL, BC");
+            this->pc++;
+
+            return this->ADD(this->h, this->l, this->b, this->c);
         } break;
 
         /*
@@ -839,19 +853,6 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
         }
     }
 
-    if(high >= 0x4 && high <= 0x7) {
-        this->pc ++;
-        const uint8_t& r = this->getArith8Operand(low - (low <= 0x7 ? 0 : 0x8));
-        
-        if(low <= 0x7) {
-            logger->log("BIT " + to_string(((high * 2) - (0x4 * 2))) + ", r with r: " + intToHex(r));
-            return this->BIT((high * 2) - (0x4 * 2), r);
-        } else {
-            logger->log("BIT " + to_string(((high * 2) - (0x4 * 2) + 1)) + ", r with r: " + intToHex(r));
-            return this->BIT((high * 2) - (0x4 * 2) + 1, r);
-        }
-    }
-
     if(high == 0x3) { // SWAP r
         if(low <= 0x7) {
             this->pc ++;
@@ -865,6 +866,32 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
 
             logger->log("SRL r with r: " + intToHex(r));
             return this->SRL(r);
+        }
+    }
+
+    if(high >= 0x4 && high <= 0x7) {
+        this->pc ++;
+        const uint8_t& r = this->getArith8Operand(low - (low <= 0x7 ? 0 : 0x8));
+        
+        if(low <= 0x7) {
+            logger->log("BIT " + to_string(((high * 2) - (0x4 * 2))) + ", r with r: " + intToHex(r));
+            return this->BIT((high * 2) - (0x4 * 2), r);
+        } else {
+            logger->log("BIT " + to_string(((high * 2) - (0x4 * 2) + 1)) + ", r with r: " + intToHex(r));
+            return this->BIT((high * 2) - (0x4 * 2) + 1, r);
+        }
+    }
+
+    if(high >= 0x8 && high <= 0xB) {
+        this->pc ++;
+        uint8_t& r = this->getArith8Operand(low - (low <= 0x7 ? 0 : 0x8));
+
+        if(low <= 0x7) {
+            logger->log("RES " + to_string(((high * 2) - (0x8 * 2))) + ", r with r: " + intToHex(r));
+            return this->RES((high * 2) - (0x8 * 2), r);
+        } else {
+            logger->log("RES " + to_string(((high * 2) - (0x8 * 2) + 1)) + ", r with r: " + intToHex(r));
+            return this->RES((high * 2) - (0x8 * 2) + 1, r);
         }
     }
 
@@ -1487,6 +1514,17 @@ void CPU::RR(uint8_t &r) {
     if(r & 0x01) this->setCarry();
 
     r = (r >> 1) + (carry << 7);
+}
+
+/*
+
+    RES
+
+*/
+
+void CPU::RES(const uint8_t &bit, uint8_t &r) {
+    // Reset bit in r
+    r &= ~(1 << bit);
 }
 
 /*
