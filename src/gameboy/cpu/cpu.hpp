@@ -178,6 +178,9 @@ class CPU {
         // RST
         void RST(const uint8_t &adr); 
 
+        // SLA
+        void SLA(uint8_t &r);
+
         /*
         
             Prefixed instructions

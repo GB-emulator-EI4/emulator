@@ -32,10 +32,18 @@ void minishell() {
         cin >> command;
 
         if(command == "q") break; // Exit
-        else if(command == "m") gameboy->runMcycle(); // Help
-        else if(command == "f") gameboy->freeRun(); // Run one M cycle
-        else if(command == "dr") gameboy->cpu->DUMPR(); // Free run
-        else if(command == "df") gameboy->cpu->DUMPFlags(); // Dump all registers
+        else if(command == "m") gameboy->runMcycle(); // Run one M cycle
+        else if(command == "mx") { // Run n cycles
+            int cycles;
+
+            cout << "Enter number of cycles: ";
+            cin >> cycles;
+
+            for(int i = 0; i < cycles; i++) gameboy->runMcycle();
+        }
+        else if(command == "f") gameboy->freeRun(); // Free run
+        else if(command == "dr") gameboy->cpu->DUMPR(); // Dump all registers
+        else if(command == "df") gameboy->cpu->DUMPFlags(); // Dump all flags
         else if(command == "ra") { // Run until PC reaches address
             uint16_t address;
 
@@ -50,7 +58,7 @@ void minishell() {
             cin >> hex >> address;
 
             cout << "Value at address " << intToHex(address) << ": " << intToHex((uint8_t&) gameboy->memory->fetch8(address)) << endl;
-        } else if(command == "help") cout << "Available commands: q (quit), m (run one M cycle), f (free run), dr (dump registers), df (dump flags), ra (run until PC reaches address), rd (read address)" << endl;
+        } else if(command == "help") cout << "Available commands: q (quit), m (run one M cycle), mx (run n cycles, ask n), f (free run), dr (dump registers), df (dump flags), ra (run until PC reaches address), rd (read address)" << endl;
         else break; // Unknown command
     }
 }

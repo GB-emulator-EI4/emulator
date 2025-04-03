@@ -521,13 +521,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC0: { // RET NZ
             logger->log("RET NZ");
 
+            this->pc++;
+
             // Check if the zero flag is not set
             if(this->getZero() == 0) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Zero flag is set, skipping RET NZ");
-                this->pc += 2;
                 return;
             }
         } break;
@@ -596,13 +596,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC8: { // RET Z
             logger->log("RET Z");
 
+            this->pc++;
+
             // Check if the zero flag is set
             if(this->getZero() == 1) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Zero flag is not set, skipping RET Z");
-                this->pc += 2;
                 return;
             }
 
@@ -671,13 +671,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD0: { // RET NC
             logger->log("RET NC");
 
+            this->pc++;
+
             // Check if the carry flag is not set
             if(this->getCarry() == 0) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Carry flag is set, skipping RET NC");
-                this->pc += 2;
                 return;
             }
         } break;
@@ -735,13 +735,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD8: { // RET C
             logger->log("RET C");
 
+            this->pc++;
+
             // Check if the carry flag is set
             if(this->getCarry() == 1) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Carry flag is not set, skipping RET C");
-                this->pc += 2;
                 return;
             }
         } break;
@@ -1037,6 +1037,22 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
 
             this->pc ++;
             return this->RR(r);
+        }
+    }
+
+    if(high == 0x2) {
+        if(low <= 0x7) { // SLA r
+            uint8_t& r = this->getArith8Operand(low);
+            logger->log("SLA r with r: " + intToHex(r));
+
+            this->pc ++;
+            return this->SLA(r);
+        } else { // SRA r
+            // uint8_t& r = this->getArith8Operand(low - 0x8);
+            // logger->log("SRA r with r: " + intToHex(r));
+
+            // this->pc ++;
+            // return this->SRA(r);
         }
     }
 
@@ -1776,6 +1792,27 @@ void CPU::RST(const uint8_t &adr) {
 
 /*
 
+    SLA
+
+*/
+
+void CPU::SLA(uint8_t &r) {
+    // Shift r left
+    this->resetCarry();
+
+    if(r & 0x80) this->setCarry();
+
+    r <<= 1;
+
+    this->resetSub();
+    this->resetHalfCarry();
+
+    if(r == 0) this->setZero();
+    else this->resetZero();
+}
+
+/*
+
     DUMP
 
 */
@@ -1783,7 +1820,7 @@ void CPU::RST(const uint8_t &adr) {
 void CPU::DUMPR() {
     // Dump registers
     logger->log("\033[34mDumping registers\033[0m");
-    logger->log("\033[34mA: " + intToHex(this->a) + " F: " + intToHex(this->f) + " B: " + intToHex(this->b) + " C: " + intToHex(this->c) + " D: " + intToHex(this->d) + " E: " + intToHex(this->e) + " H: " + intToHex(this->h) + " L: " + intToHex(this->l) + " SP: " + intToHex(this->sp) + " PC: " + intToHex(this->pc) + "\033[0m");
+    logger->log("\033[34mA: " + intToHex(this->a) + " F: " + intToHex(this->f) + " B: " + intToHex(this->b) + " C: " + intToHex(this->c) + " D: " + intToHex(this->d) + " E: " + intToHex(this->e) + " H: " + intToHex(this->h) + " L: " + intToHex(this->l) + " SP: " + intToHex(this->sp) + " PC: " + intToHex(this->pc) + " IME: " + to_string(this->ime) + "\033[0m");
 }
 
 void CPU::DUMPFlags() {
@@ -1829,6 +1866,11 @@ void CPU::disableInterrupt(const Interrupt interrupt) {
 }
 
 void CPU::triggerInterrupt(const Interrupt interrupt) {
+    // If interrupt vblank log warning
+    if(interrupt == Interrupt::VBlank) {
+        logger->warning("VBLANK interrupt triggered");
+    }
+
     this->gameboy->memory->fetch8(0xFF0F) |= (uint8_t) interrupt;
 }
 
