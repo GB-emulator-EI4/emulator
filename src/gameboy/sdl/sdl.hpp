@@ -28,6 +28,16 @@ class SDLRenderer {
         // Clean up
         void cleanup();
 
+        // Key states
+        const Uint8* keyStates;
+
+        // Getter
+        const Uint8* getKeyStates() { 
+            // Update key states
+            SDL_PumpEvents();
+            return this->keyStates; 
+        }
+
     private:
         // Gameboy instance
         Gameboy* gameboy;

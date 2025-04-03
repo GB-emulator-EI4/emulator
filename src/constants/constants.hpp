@@ -9,7 +9,7 @@
 #define BOOT_ROM_PATH "roms/boot/dmg_boot.bin"
 
 // Enable / Disable boot ROM, used for testing
-#define ENABLE_BOOT_ROM true
+#define ENABLE_BOOT_ROM false
 
 /*
 
@@ -17,7 +17,8 @@
 
 */
 
-#define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
+// #define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
+// #define ROM_PATH "roms/games/Tetris (World) (Rev A) (without credits).gb"
 
 /*
 
@@ -46,7 +47,7 @@
 
 */
 
-// #define ROM_PATH "roms/tests/downloaded/blargg/01-special.gb"
+#define ROM_PATH "roms/tests/downloaded/blargg/01-special.gb"
 // #define ROM_PATH "roms/tests/downloaded/blargg/02-interrupts.gb"
 // #define ROM_PATH "roms/tests/downloaded/blargg/03-op sp,hl.gb"
 // #define ROM_PATH "roms/tests/downloaded/blargg/04-op r,imm.gb"
@@ -71,4 +72,4 @@
 
 */
 
-#define ENABLE_LOGGING false
+#define ENABLE_LOGGING true
