@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#include "../../constants/constants.hpp"
+
 #include "ppu.hpp"
 
 PPU::PPU(Gameboy* gameboy) : gameboy(gameboy), logger(Logger::getInstance()->getLogger("PPU")), currentLY(0), currentMode(Mode::OAMSearch) {
@@ -42,11 +44,11 @@ void PPU::step() {
             break;
             
         case Mode::HBlank:
-            //changes handled at T-cycle 456/0
+            // changes handled at T-cycle 456/0
             break;
             
         case Mode::VBlank:
-            if (this->gameboy->getTcycles() == 0 && currentLY == 144) {
+            if(this->gameboy->getTcycles() == 0 && currentLY == 144) {
                 //entered VBlank
                 this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
                 checkSTATInterrupts();
@@ -70,14 +72,36 @@ void PPU::step() {
     } else if (this->gameboy->getTcycles() == 0) {
         if (currentLY == 144) {
             currentMode = Mode::VBlank;
+
+            this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
         } else if (currentLY == 0 || currentLY < 144) {
             currentMode = Mode::OAMSearch;
             checkSTATInterrupts(); 
         }
-        
-        
-        if (currentLY == 0) {
-            this->gameboy->renderer->render(framebuffer);
+    
+        if(ENABLE_LOGGING) {
+            // Copy framebuffer into another var
+            FrameBuffer copyFramebuffer;
+
+            for (int i = 0; i < SCREEN_HEIGHT; i++) {
+                for (int j = 0; j < SCREEN_WIDTH; j++) {
+                    copyFramebuffer[i][j] = framebuffer[i][j];
+                }
+            }
+
+            // Add a colored pixel to where the LY is
+            if(currentLY < SCREEN_HEIGHT) {
+                for (int i = 0; i < SCREEN_WIDTH; i++) {
+                    copyFramebuffer[currentLY][i] = 0xFF;
+                }
+            }
+
+            // Render the framebuffer
+            this->gameboy->renderer->render(copyFramebuffer);
+        } else {
+           if (currentLY == 0) {
+                this->gameboy->renderer->render(framebuffer);
+            }
         }
     }
     

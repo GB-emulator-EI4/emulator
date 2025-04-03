@@ -30,7 +30,7 @@ Gameboy* Gameboy::instance = nullptr;
 
 */
 
-Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory()), ppu(new PPU(this)), running(true), cyclesCounter(0), Mcycles(0), Tcycles(0) {
+Gameboy::Gameboy() : cpu(new CPU(this)), memory(new Memory(this)), ppu(new PPU(this)), timer(new Timer(this)) ,running(true), cyclesCounter(0), Mcycles(0), Tcycles(0) {
     logger = Logger::getInstance()->getLogger("Gameboy");
     logger->log("Gameboy Constructor");
 }
@@ -44,6 +44,7 @@ Gameboy::~Gameboy() {
     delete memory;
     delete ppu;
     delete logger;
+    delete timer;
 }
 
 /*
@@ -124,10 +125,11 @@ void Gameboy::freeRun() {
 
 void Gameboy::setBootRom(const string &bootRomPath) {
     logger->log("Gameboy setting boot ROM");
-    this->memory->loadRom(BOOTROM, BOOTROM_OFFSET, bootRomPath, BOOTROM_SIZE);
+    this->memory->loadRom(BOOTROM, bootRomPath, 0, BOOTROM_SIZE);
 }
 
 void Gameboy::setGameRom(const string &gameRomPath) {
     logger->log("Gameboy setting game ROM");
-    this->memory->loadRom(ROM_FIXED, ROM_FIXED_OFFSET, gameRomPath, ROM_FIXED_SIZE);
+    this->memory->loadRom(ROM_FIXED, gameRomPath, 0, ROM_FIXED_SIZE);
+    this->memory->loadRom(ROM_BANKED, gameRomPath, ROM_FIXED_SIZE, ROM_BANKED_SIZE);
 }
