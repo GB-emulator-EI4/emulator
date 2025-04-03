@@ -27,7 +27,7 @@ Memory::Memory(Gameboy* gameboy) : gameboy(gameboy), bootrom(), romFixed(), romB
 
 void Memory::preloadValues() {
     // Write to the JOYPAD register
-    this->fetch8(0xFF00) = 0x0F;
+    this->fetch8(0xFF00) = (uint8_t) 0xFF;
 }
 
 Memory::~Memory() {
@@ -138,7 +138,18 @@ char& Memory::fetch8(const uint16_t &address) {
 
 char& Memory::fetchIOs(const uint16_t &address) {
     // Log reading joypad
-    if(address == 0xFF00) logger->log("Warning: Reading joypad at address " + intToHex(address));
+    if(address == 0xFF00) {
+        logger->log("Warning: Reading joypad at address " + intToHex(address));
+
+        // Reset registrer to FF
+        this->io[0xFF00 - IO_OFFSET] = (char) 0xFF;
+
+        // Check if bits 4 and 5 are set
+        // if((this->io[0xFF00] & 0x30) == 0x30) { TODO uncomment
+        //     // Set bits 0-3 to 1
+        //     this->io[0xFF00] |= 0x0F;
+        // }
+    }
 
     // just logging timer reg access and freq values
     else if(address - IO_OFFSET == DIVIDER_REGISTER) {
