@@ -72,6 +72,7 @@ private:
 
     // Frame buffer to store pixel data
     FrameBuffer framebuffer;
+    uint8_t bgBuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
     // PPU internal state
     int currentLY; // current scanline
