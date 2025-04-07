@@ -340,9 +340,13 @@ void PPU::fetchSpriteData() {
     //Sprite data is stored in the OAM section of memory which can fit up to 40 sprites.
     for (int i = 0; i < 40 ; i++) {
         uint8_t yPos = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4) - 16;
+        
+        if (yPos > 144 || currentLY < yPos || currentLY >= yPos + spriteHeight) 
+        continue;
+        
         uint8_t xPos = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 1) - 8;
 
-        if (currentLY >= yPos && currentLY < (yPos + spriteHeight) && xPos < 160 && xPos + 8 > 0) {
+        if (visibleSpriteCount < 40) {
             visibleSprites[visibleSpriteCount].index = i;
             visibleSprites[visibleSpriteCount].x = xPos;
             visibleSpriteCount++;
@@ -359,10 +363,10 @@ void PPU::fetchSpriteData() {
         }
     }
 
-    
     int spritesToRender = (visibleSpriteCount > SPRITES_PER_LINE_LIMIT) ? SPRITES_PER_LINE_LIMIT : visibleSpriteCount;
 
-    for (int i = 0; i < spritesToRender; i++) {
+    // pour que les sprites avec le plus grand x ecrasent les autres
+    for (int i = spritesToRender - 1; i >= 0; i--) {
         int spriteIndex = visibleSprites[i].index;
         uint8_t yPos = this->gameboy->memory->fetch8(OAM_OFFSET + spriteIndex * 4) - 16;
         uint8_t xPos = this->gameboy->memory->fetch8(OAM_OFFSET + spriteIndex * 4 + 1) - 8;
@@ -392,6 +396,8 @@ void PPU::fetchSpriteData() {
 
 
         for (int x = 0; x < 8; x++) {
+            if (xPos + x < 0 || xPos + x >= SCREEN_WIDTH) continue;
+
             int bit = attributes & 0x20 ? x : 7 - x; // Horizontal flip
 
             uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
@@ -400,24 +406,20 @@ void PPU::fetchSpriteData() {
             uint8_t color = (palette >> (colorIndex * 2)) & 0x03;
 
             int pixelX = xPos + x;
-            if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
-                uint8_t bgPixel = bgBuffer[currentLY][pixelX];
+            uint8_t bgPixel = bgBuffer[currentLY][pixelX];
 
-                bool drawSprite = false;
+            bool drawSprite = true;
 
-                if (attributes & 0x80) {
-                    drawSprite = (bgPixel == 0);
-                } else {
-                    drawSprite = true;
-                }
+            if (attributes & 0x80) {
+                drawSprite = (bgPixel == 0);
+            }
 
-                if (drawSprite) {
-                    framebuffer[currentLY][pixelX] = color;
-                    if (logger != nullptr && color != 0) {
-                        *logger << "Sprite color: " + std::to_string(color) + 
-                                  ", X: " + std::to_string(pixelX) + 
-                                  ", Y: " + std::to_string(currentLY);
-                    }
+            if (drawSprite) {
+                framebuffer[currentLY][pixelX] = color;
+                if (logger != nullptr && color != 0) {
+                    *logger << "Sprite color: " + std::to_string(color) + 
+                                ", X: " + std::to_string(pixelX) + 
+                                ", Y: " + std::to_string(currentLY);
                 }
             }
         }
