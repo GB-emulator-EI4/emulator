@@ -1098,6 +1098,19 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
         }
     }
 
+    if(high >= 0xC && high <= 0xF) {
+        this->pc ++;
+        uint8_t& r = this->getArith8Operand(low - (low <= 0x7 ? 0 : 0x8));
+
+        if(low <= 0x7) {
+            logger->log("SET " + to_string(((high * 2) - (0xC * 2))) + ", r with r: " + intToHex(r));
+            return this->SET((high * 2) - (0xC * 2), r);
+        } else {
+            logger->log("SET " + to_string(((high * 2) - (0xC * 2) + 1)) + ", r with r: " + intToHex(r));
+            return this->SET((high * 2) - (0xC * 2) + 1, r);
+        }
+    }
+
     logger->error("Unknown prefixed opcode: " + intToHex(opcode));
     this->gameboy->stop();
 }
@@ -1809,6 +1822,17 @@ void CPU::SLA(uint8_t &r) {
 
     if(r == 0) this->setZero();
     else this->resetZero();
+}
+
+/*
+
+    SET
+
+*/
+
+void CPU::SET(const uint8_t &bit, uint8_t &r) {
+    // Set bit in r
+    r |= (1 << bit);
 }
 
 /*

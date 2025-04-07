@@ -63,6 +63,8 @@ void minishell() {
     }
 }
 
+#include "SDL2/SDL.h"
+
 int main() {
     // Init logger
     masterLogger = Logger::getInstance();

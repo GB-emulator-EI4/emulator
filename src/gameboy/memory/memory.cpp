@@ -26,8 +26,7 @@ Memory::Memory(Gameboy* gameboy) : gameboy(gameboy), bootrom(), romFixed(), romB
 }
 
 void Memory::preloadValues() {
-    // Write to the JOYPAD register
-    this->fetch8(0xFF00) = (uint8_t) 0xFF;
+
 }
 
 Memory::~Memory() {
@@ -142,13 +141,47 @@ char& Memory::fetchIOs(const uint16_t &address) {
         logger->log("Warning: Reading joypad at address " + intToHex(address));
 
         // Reset registrer to FF
-        this->io[0xFF00 - IO_OFFSET] = (char) 0xFF;
+        // this->io[0xFF00 - IO_OFFSET] = (char) 0xFF;
+
+        // Key mapping:
+        // up -> up arrow on qwerty
+        // down -> down arrow on qwerty
+        // left -> left arrow on qwerty
+        // right -> right arrow on qwerty
+
+        // a -> z on qwerty
+        // b -> x on qwerty
+        // start -> enter on qwerty
+        // select -> s on qwerty
 
         // Check if bits 4 and 5 are set
-        // if((this->io[0xFF00] & 0x30) == 0x30) { TODO uncomment
-        //     // Set bits 0-3 to 1
-        //     this->io[0xFF00] |= 0x0F;
-        // }
+        if((this->io[0xFF00 - IO_OFFSET] & 0x30) == 0x30) {
+            // Set bits 0-3 to 1
+            this->io[0xFF00 - IO_OFFSET] |= 0x0F;
+        } else {
+            const Uint8* keyStates = this->gameboy->renderer->getKeyStates();
+
+            // If select buttons enable
+            if((this->io[0xFF00 - IO_OFFSET] & 0x20) == 0) {
+                // Set bits 0-3 to 1
+                this->io[0xFF00 - IO_OFFSET] |= 0x0F;
+
+                // Fill the register with the key states
+                if(keyStates[SDL_SCANCODE_RETURN]) this->io[0xFF00 - IO_OFFSET] &= ~0x08; // Start
+                if(keyStates[SDL_SCANCODE_S]) this->io[0xFF00 - IO_OFFSET] &= ~0x04; // Select
+                if(keyStates[SDL_SCANCODE_X]) this->io[0xFF00 - IO_OFFSET] &= ~0x02; // B
+                if(keyStates[SDL_SCANCODE_Z]) this->io[0xFF00 - IO_OFFSET] &= ~0x01; // A
+            } else {
+                // Set bits 0-3 to 1
+                this->io[0xFF00 - IO_OFFSET] |= 0x0F;
+
+                // Fill the register with the key states
+                if(keyStates[SDL_SCANCODE_UP]) this->io[0xFF00 - IO_OFFSET] &= ~0x08; // Up
+                if(keyStates[SDL_SCANCODE_DOWN]) this->io[0xFF00 - IO_OFFSET] &= ~0x04; // Down
+                if(keyStates[SDL_SCANCODE_LEFT]) this->io[0xFF00 - IO_OFFSET] &= ~0x02; // Left
+                if(keyStates[SDL_SCANCODE_RIGHT]) this->io[0xFF00 - IO_OFFSET] &= ~0x01; // Right
+            }
+        }
     }
 
     // just logging timer reg access and freq values
