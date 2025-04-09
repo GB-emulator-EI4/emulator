@@ -76,7 +76,6 @@ A Game Boy emulator written in C++ that emulates the core components of the orig
    ```bash
    git clone https://github.com/your-username/gameboy-emulator.git
    cd gameboy-emulator
-   
 
 2. Install SDL2:
    ```bash
@@ -86,40 +85,7 @@ A Game Boy emulator written in C++ that emulates the core components of the orig
    ```bash
    make
 
-
 ---
 ## Usage
 
 To run a Game Boy ROM, go to constants.hpp file and define the path to your ROM.
-
----
-
-## Project Structure
-
-emulator/
-├── src/
-│   ├── main.cpp          # Entry point of the emulator
-│   ├── gameboy/
-│   │   ├── cpu/          # CPU emulation
-│   │   │   ├── cpu.cpp   # CPU implementation
-│   │   │   ├── cpu.hpp   # CPU header
-│   │   ├── ppu/          # PPU (Pixel Processing Unit) emulation
-│   │   │   ├── ppu.cpp   # PPU implementation
-│   │   │   ├── ppu.hpp   # PPU header
-│   │   ├── memory/       # Memory management
-│   │   │   ├── memory.cpp # Memory implementation
-│   │   │   ├── memory.hpp # Memory header
-│   │   ├── sdl/          # SDL renderer
-│   │   │   ├── sdl.cpp   # SDL renderer implementation
-│   │   │   ├── sdl.hpp   # SDL renderer header
-│   │   ├── logging/      # Logging system
-│   │   │   ├── log.cpp   # Log implementation
-│   │   │   ├── log.hpp   # Log header
-│   │   │   ├── logger.cpp # Logger implementation
-│   │   │   ├── logger.hpp # Logger header
-│   │   └── gameboy.hpp   # Game Boy class (ties all components together)
-│   └── constants/        # Constants and definitions
-│       ├── constants.hpp # Hardware constants (e.g., memory addresses)
-├── Makefile              # Build system
-├── README.md             # Project documentation
-└── LICENSE               # License file
