@@ -9,7 +9,6 @@ using namespace std;
 #include "../../constants/constants.hpp"
 #include "../logging/logger/logger.hpp"
 #include "../utils/utils.hpp"
-#include "../timer/timer.hpp"
 
 #include "memory.hpp"
 
@@ -19,7 +18,7 @@ using namespace std;
 
 */
 
-Memory::Memory() : gameboy(gameboy), bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram(), interruptEnable(0) {
+Memory::Memory(Gameboy* gameboy) : gameboy(gameboy), bootrom(), romFixed(), romBanked(), vram(), extram(), wramFixed(), wramBanked(), oam(), noRam(), io(), hram(), interruptEnable(0) {
     logger = Logger::getInstance()->getLogger("Memory");
     logger->log("Memory Constructor");
 
@@ -27,8 +26,7 @@ Memory::Memory() : gameboy(gameboy), bootrom(), romFixed(), romBanked(), vram(),
 }
 
 void Memory::preloadValues() {
-    // Write to the JOYPAD register
-    this->fetch8(0xFF00) = 0x0F;
+
 }
 
 Memory::~Memory() {
@@ -139,27 +137,81 @@ char& Memory::fetch8(const uint16_t &address) {
 
 char& Memory::fetchIOs(const uint16_t &address) {
     // Log reading joypad
-    if(address == 0xFF00) logger->log("Warning: Reading joypad at address " + intToHex(address));
+    if(address == 0xFF00) {
+        logger->log("Warning: Reading joypad at address " + intToHex(address));
+
+        // Reset registrer to FF
+        // this->io[0xFF00 - IO_OFFSET] = (char) 0xFF;
+
+        // Key mapping:
+        // up -> up arrow on qwerty
+        // down -> down arrow on qwerty
+        // left -> left arrow on qwerty
+        // right -> right arrow on qwerty
+
+        // a -> z on qwerty
+        // b -> x on qwerty
+        // start -> enter on qwerty
+        // select -> s on qwerty
+
+        // Check if bits 4 and 5 are set
+        if((this->io[0xFF00 - IO_OFFSET] & 0x30) == 0x30) {
+            // Set bits 0-3 to 1
+            this->io[0xFF00 - IO_OFFSET] |= 0x0F;
+        } else {
+            const Uint8* keyStates = this->gameboy->renderer->getKeyStates();
+
+            // If select buttons enable
+            if((this->io[0xFF00 - IO_OFFSET] & 0x20) == 0) {
+                // Set bits 0-3 to 1
+                this->io[0xFF00 - IO_OFFSET] |= 0x0F;
+
+                // Fill the register with the key states
+                if(keyStates[SDL_SCANCODE_RETURN]) this->io[0xFF00 - IO_OFFSET] &= ~0x08; // Start
+                if(keyStates[SDL_SCANCODE_S]) this->io[0xFF00 - IO_OFFSET] &= ~0x04; // Select
+                if(keyStates[SDL_SCANCODE_X]) this->io[0xFF00 - IO_OFFSET] &= ~0x02; // B
+                if(keyStates[SDL_SCANCODE_Z]) this->io[0xFF00 - IO_OFFSET] &= ~0x01; // A
+            } else {
+                // Set bits 0-3 to 1
+                this->io[0xFF00 - IO_OFFSET] |= 0x0F;
+
+                // Fill the register with the key states
+                if(keyStates[SDL_SCANCODE_UP]) this->io[0xFF00 - IO_OFFSET] &= ~0x08; // Up
+                if(keyStates[SDL_SCANCODE_DOWN]) this->io[0xFF00 - IO_OFFSET] &= ~0x04; // Down
+                if(keyStates[SDL_SCANCODE_LEFT]) this->io[0xFF00 - IO_OFFSET] &= ~0x02; // Left
+                if(keyStates[SDL_SCANCODE_RIGHT]) this->io[0xFF00 - IO_OFFSET] &= ~0x01; // Right
+            }
+        }
+    }
 
     // just logging timer reg access and freq values
     else if(address - IO_OFFSET == DIVIDER_REGISTER) {
         logger->log("Reading divider register at addr " + intToHex(address));
-        logger->log("Divider Register Value: " + to_string(timer->getDividerRegister()));
+        // logger->log("Divider Register Value: " + to_string(timer->getDividerRegister()));
+
+        // TODO return ref to memory adress
+        // Note: timer class should not hold the values of it's registers but rather read the memory adress asign to it each time it needs to use it.
     }
 
     else if(address - IO_OFFSET == TIMER_COUNTER) {
         logger->log("Reading timer counter at addr " + intToHex(address));
-        logger->log("Timer Counter Value: " + to_string(timer->getTimerCounter()));
+        // logger->log("Timer Counter Value: " + to_string(timer->getTimerCounter()));
+
+        // TODO return ref to memory adress
     }
 
     else if(address - IO_OFFSET == TIMER_MODULO) {
         logger->log("Reading timer modulo at addr " + intToHex(address));
-        logger->log("Timer Modulo Value: " + to_string(timer->getTimerModulo()));
+        // logger->log("Timer Modulo Value: " + to_string(timer->getTimerModulo()));
+
+        // TODO return ref to memory adress
     }
 
     else if(address - IO_OFFSET == TIMER_CONTROL) {
         logger->log("Reading timer control at addr " + intToHex(address));
-        logger->log("Timer Control Value: " + to_string(timer->getTimerControl()));
+        // logger->log("Timer Control Value: " + to_string(timer->getTimerControl()));
+
+        // TODO return ref to memory adress
     }
 
     // Log reading serial
@@ -171,7 +223,7 @@ char& Memory::fetchIOs(const uint16_t &address) {
         // this->gameboy->stop();
     }
 
-     // Log warning if reading interrupts infos
+    // Log warning if reading interrupts infos
     //else if(address == 0xFF0F) logger->warning("Warning: Reading interrupts infos at address " + intToHex(address));
 
     // Log reading sound

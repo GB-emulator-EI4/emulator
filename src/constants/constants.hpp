@@ -18,6 +18,7 @@
 */
 
 #define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
+// #define ROM_PATH "roms/games/Tetris (World) (Rev A) (without credits).gb"
 
 /*
 
@@ -71,4 +72,4 @@
 
 */
 
-#define ENABLE_LOGGING true
+#define ENABLE_LOGGING false

@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#include "../../constants/constants.hpp"
+
 #include "ppu.hpp"
 
 PPU::PPU(Gameboy* gameboy) : gameboy(gameboy), logger(Logger::getInstance()->getLogger("PPU")), currentLY(0), currentMode(Mode::OAMSearch) {
@@ -42,11 +44,11 @@ void PPU::step() {
             break;
             
         case Mode::HBlank:
-            //changes handled at T-cycle 456/0
+            // changes handled at T-cycle 456/0
             break;
             
         case Mode::VBlank:
-            if (this->gameboy->getTcycles() == 0 && currentLY == 144) {
+            if(this->gameboy->getTcycles() == 0 && currentLY == 144) {
                 //entered VBlank
                 this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
                 checkSTATInterrupts();
@@ -70,14 +72,36 @@ void PPU::step() {
     } else if (this->gameboy->getTcycles() == 0) {
         if (currentLY == 144) {
             currentMode = Mode::VBlank;
+
+            this->gameboy->cpu->triggerInterrupt(Interrupt::VBlank);
         } else if (currentLY == 0 || currentLY < 144) {
             currentMode = Mode::OAMSearch;
             checkSTATInterrupts(); 
         }
-        
-        
-        if (currentLY == 0) {
-            this->gameboy->renderer->render(framebuffer);
+    
+        if(ENABLE_LOGGING) {
+            // Copy framebuffer into another var
+            FrameBuffer copyFramebuffer;
+
+            for (int i = 0; i < SCREEN_HEIGHT; i++) {
+                for (int j = 0; j < SCREEN_WIDTH; j++) {
+                    copyFramebuffer[i][j] = framebuffer[i][j];
+                }
+            }
+
+            // Add a colored pixel to where the LY is
+            if(currentLY < SCREEN_HEIGHT) {
+                for (int i = 0; i < SCREEN_WIDTH; i++) {
+                    copyFramebuffer[currentLY][i] = 0xFF;
+                }
+            }
+
+            // Render the framebuffer
+            this->gameboy->renderer->render(copyFramebuffer);
+        } else {
+           if (currentLY == 0) {
+                this->gameboy->renderer->render(framebuffer);
+            }
         }
     }
     
@@ -231,6 +255,7 @@ void PPU::fetchBackgroundTileData() {
         uint8_t color = (bgp >> (colorIndex * 2)) & 0x03;
 
         // Store the pixel in the framebuffer
+        bgBuffer[currentLY][x] = color;
         framebuffer[currentLY][x] = color;
 
         if(color != 0) {
@@ -299,53 +324,102 @@ void PPU::fetchSpriteData() {
     uint8_t lcdc = this->gameboy->memory->fetch8(LCDC); 
     // check the bit 2 of lcdc to know sprite size
     bool spriteSize = lcdc & 0x04; // sprite size can be 8x8 or 8x16
+    int spriteHeight = spriteSize ? 16 : 8;
 
     //on peut avoir max 10 sprites par scanline
     const int SPRITES_PER_LINE_LIMIT = 10;
-    int spritesRendered = 0;
+    // int spritesRendered = 0;
+
+    struct SpriteInfo {
+        int index;
+        uint8_t x;
+    };
+    SpriteInfo visibleSprites[40]; //pour les sprites visibles
+    int visibleSpriteCount = 0;
 
     //Sprite data is stored in the OAM section of memory which can fit up to 40 sprites.
-    for (int i = 0; i < 40 && spritesRendered < SPRITES_PER_LINE_LIMIT; i++) {
+    for (int i = 0; i < 40 ; i++) {
         uint8_t yPos = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4) - 16;
+        
+        if (yPos > 144 || currentLY < yPos || currentLY >= yPos + spriteHeight) 
+        continue;
+        
         uint8_t xPos = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 1) - 8;
+
+        if (visibleSpriteCount < 40) {
+            visibleSprites[visibleSpriteCount].index = i;
+            visibleSprites[visibleSpriteCount].x = xPos;
+            visibleSpriteCount++;
+        }
+    }
+
+    for (int i = 0; i < visibleSpriteCount - 1; i++) {
+        for (int j = 0; j < visibleSpriteCount - i - 1; j++) {
+            if (visibleSprites[j].x > visibleSprites[j + 1].x) {
+                SpriteInfo temp = visibleSprites[j];
+                visibleSprites[j] = visibleSprites[j + 1];
+                visibleSprites[j + 1] = temp;
+            }
+        }
+    }
+
+    int spritesToRender = (visibleSpriteCount > SPRITES_PER_LINE_LIMIT) ? SPRITES_PER_LINE_LIMIT : visibleSpriteCount;
+
+    // pour que les sprites avec le plus grand x ecrasent les autres
+    for (int i = spritesToRender - 1; i >= 0; i--) {
+        int spriteIndex = visibleSprites[i].index;
+        uint8_t yPos = this->gameboy->memory->fetch8(OAM_OFFSET + spriteIndex * 4) - 16;
+        uint8_t xPos = this->gameboy->memory->fetch8(OAM_OFFSET + spriteIndex * 4 + 1) - 8;
         uint8_t tileIndex = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 2);
         uint8_t attributes = this->gameboy->memory->fetch8(OAM_OFFSET + i * 4 + 3);
 
-        int spriteHeight = spriteSize ? 16 : 8;
+        int tileY = currentLY - yPos;
 
-        if (currentLY >= yPos && currentLY < (yPos + spriteHeight)) {
-            spritesRendered++;
-            int tileY = currentLY - yPos;
-            if (attributes & 0x40) { // Vertical flip
-                tileY = spriteHeight - 1 - tileY;
+        if (attributes & 0x40) { // Vertical flip
+            tileY = spriteHeight - 1 - tileY;
+        }
+
+        if (spriteSize) {
+            tileIndex &= 0xFE; //quand on est en 8x16 mode, le bit 0 est ignored
+
+            if (tileY >= 8) {
+                tileIndex ++; // On prend le deuxième sprite de la paire
+                tileY -= 8; // On ajuste la position Y pour le deuxième sprite
+            }
+        }
+
+        uint16_t tileDataAddress = 0x8000 + (tileIndex * 16) + (tileY * 2);
+        uint8_t lowByte = this->gameboy->memory->fetch8(tileDataAddress);
+        uint8_t highByte = this->gameboy->memory->fetch8(tileDataAddress + 1);
+
+        uint8_t palette = (attributes & 0x10) ? this->gameboy->memory->fetch8(OBP1) : this->gameboy->memory->fetch8(OBP0);
+
+
+        for (int x = 0; x < 8; x++) {
+            if (xPos + x < 0 || xPos + x >= SCREEN_WIDTH) continue;
+
+            int bit = attributes & 0x20 ? x : 7 - x; // Horizontal flip
+
+            uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
+            if (colorIndex == 0) continue; // Transparent
+
+            uint8_t color = (palette >> (colorIndex * 2)) & 0x03;
+
+            int pixelX = xPos + x;
+            uint8_t bgPixel = bgBuffer[currentLY][pixelX];
+
+            bool drawSprite = true;
+
+            if (attributes & 0x80) {
+                drawSprite = (bgPixel == 0);
             }
 
-            if (spriteSize){
-                tileIndex &= 0xFE; //quand on est en 8x16 mode, le bit 0 est ignored
-            }
-
-            uint16_t tileDataAddress = 0x8000 + (tileIndex * 16) + (tileY * 2);
-            uint8_t lowByte = this->gameboy->memory->fetch8(tileDataAddress);
-            uint8_t highByte = this->gameboy->memory->fetch8(tileDataAddress + 1);
-
-            for (int x = 0; x < 8; x++) {
-                int bit = attributes & 0x20 ? x : 7 - x; // Horizontal flip
-
-                uint8_t colorIndex = ((highByte >> bit) & 0x01) << 1 | ((lowByte >> bit) & 0x01);
-                if (colorIndex == 0) continue; // Transparent
-
-                uint8_t palette = (attributes & 0x10) ? this->gameboy->memory->fetch8(OBP1) : this->gameboy->memory->fetch8(OBP0);
-                uint8_t color = (palette >> (colorIndex * 2)) & 0x03;
-
-                int pixelX = xPos + x;
-                if (pixelX >= 0 && pixelX < SCREEN_WIDTH) {
-                    if (!(attributes & 0x80) || framebuffer[currentLY][pixelX] == 0) {
-                        framebuffer[currentLY][pixelX] = color;
-
-                        if(color != 0) {
-                            *logger << "Background color: " + to_string(color) + ", X: " + to_string(x) + ", Y: " + to_string(currentLY);
-                        }
-                    }
+            if (drawSprite) {
+                framebuffer[currentLY][pixelX] = color;
+                if (logger != nullptr && color != 0) {
+                    *logger << "Sprite color: " + std::to_string(color) + 
+                                ", X: " + std::to_string(pixelX) + 
+                                ", Y: " + std::to_string(currentLY);
                 }
             }
         }

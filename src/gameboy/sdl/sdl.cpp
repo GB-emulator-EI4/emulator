@@ -55,6 +55,9 @@ bool SDLRenderer::initialize() {
             return false;
         }
 
+        // Get key states
+        this->keyStates = SDL_GetKeyboardState(NULL);
+
         // Pre render empty
         SDL_RenderClear(this->renderer);
         SDL_RenderPresent(this->renderer);
@@ -66,6 +69,9 @@ bool SDLRenderer::initialize() {
 void SDLRenderer::render(const FrameBuffer &framebuffer) {
     if(!ENABLE_RENDERING) return;
     else {
+        // Update key states
+        SDL_PumpEvents();
+
         // Temporary buffer
         uint32_t pixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
         
@@ -110,7 +116,7 @@ void SDLRenderer::handleEvents() {
     // select -> s on qwerty
     while(SDL_PollEvent(&e)) {
         // Joypad input handling
-        uint8_t& joypadRegister = (uint8_t&)this->gameboy->memory->fetch8(0xFF00);
+        // uint8_t& joypadRegister = (uint8_t&)this->gameboy->memory->fetch8(0xFF00);
 
         // Key down events
         if (e.type == SDL_KEYDOWN) {
@@ -125,76 +131,76 @@ void SDLRenderer::handleEvents() {
                     this->gameboy->stop();
                     break;
                     
-                // Direction keys
-                case SDLK_DOWN:    // DOWN
-                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x08;
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
-                case SDLK_UP:  // UP
-                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x04; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
-                case SDLK_LEFT:  // Left
-                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x02; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
-                case SDLK_RIGHT: // Right
-                    if (!(joypadRegister & 0x10)) joypadRegister &= ~0x01; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
+                // // Direction keys
+                // case SDLK_DOWN:    // DOWN
+                //     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x08;
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
+                // case SDLK_UP:  // UP
+                //     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x04; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
+                // case SDLK_LEFT:  // Left
+                //     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x02; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
+                // case SDLK_RIGHT: // Right
+                //     if (!(joypadRegister & 0x10)) joypadRegister &= ~0x01; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
 
-                // Action keys
-                case SDLK_RETURN: // Start button
-                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x08; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
-                case SDLK_s:     // Select button
-                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x04; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
-                case SDLK_x:     // B button
-                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x02; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;    
-                case SDLK_z:     // A button
-                    if (!(joypadRegister & 0x20)) joypadRegister &= ~0x01; 
-                    this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
-                    break;
+                // // Action keys
+                // case SDLK_RETURN: // Start button
+                //     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x08; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
+                // case SDLK_s:     // Select button
+                //     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x04; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
+                // case SDLK_x:     // B button
+                //     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x02; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;    
+                // case SDLK_z:     // A button
+                //     if (!(joypadRegister & 0x20)) joypadRegister &= ~0x01; 
+                //     this->gameboy->cpu->triggerInterrupt(Interrupt::Joypad);
+                //     break;
             }
         }
         
-        // Key up events
-        if (e.type == SDL_KEYUP) {
-            switch (e.key.keysym.sym) {
-                // Direction keys
-                case SDLK_DOWN:
-                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x08;
-                    break;
-                case SDLK_UP:
-                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x04;
-                    break;
-                case SDLK_LEFT:
-                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x02;
-                    break;
-                case SDLK_RIGHT:
-                    if (!(joypadRegister & 0x10)) joypadRegister |= 0x01;
-                    break;
+        // // Key up events
+        // if (e.type == SDL_KEYUP) {
+        //     switch (e.key.keysym.sym) {
+        //         // Direction keys
+        //         case SDLK_DOWN:
+        //             if (!(joypadRegister & 0x10)) joypadRegister |= 0x08;
+        //             break;
+        //         case SDLK_UP:
+        //             if (!(joypadRegister & 0x10)) joypadRegister |= 0x04;
+        //             break;
+        //         case SDLK_LEFT:
+        //             if (!(joypadRegister & 0x10)) joypadRegister |= 0x02;
+        //             break;
+        //         case SDLK_RIGHT:
+        //             if (!(joypadRegister & 0x10)) joypadRegister |= 0x01;
+        //             break;
 
-                // Action keys
-                case SDLK_RETURN: // Start button
-                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x08;
-                    break;
-                case SDLK_s:     // Select button
-                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x04;
-                    break;
-                case SDLK_x:     // B button
-                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x02;
-                    break;
-                case SDLK_z:     // A button
-                    if (!(joypadRegister & 0x20)) joypadRegister |= 0x01;
-                break;
-            }
-        }
+        //         // Action keys
+        //         case SDLK_RETURN: // Start button
+        //             if (!(joypadRegister & 0x20)) joypadRegister |= 0x08;
+        //             break;
+        //         case SDLK_s:     // Select button
+        //             if (!(joypadRegister & 0x20)) joypadRegister |= 0x04;
+        //             break;
+        //         case SDLK_x:     // B button
+        //             if (!(joypadRegister & 0x20)) joypadRegister |= 0x02;
+        //             break;
+        //         case SDLK_z:     // A button
+        //             if (!(joypadRegister & 0x20)) joypadRegister |= 0x01;
+        //         break;
+        //     }
+        // }
     }
 }
 

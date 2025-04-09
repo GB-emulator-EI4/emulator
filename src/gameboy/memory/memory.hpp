@@ -101,8 +101,6 @@ class Memory {
 
         Log* logger;
 
-        Timer* timer;
-
         char bootrom[BOOTROM_SIZE]; // 256B
 
         char romFixed[ROM_FIXED_SIZE]; // 16KB

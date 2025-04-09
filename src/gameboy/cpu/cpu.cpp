@@ -521,13 +521,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC0: { // RET NZ
             logger->log("RET NZ");
 
+            this->pc++;
+
             // Check if the zero flag is not set
             if(this->getZero() == 0) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Zero flag is set, skipping RET NZ");
-                this->pc += 2;
                 return;
             }
         } break;
@@ -590,20 +590,19 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xC7: { // RST 00
             logger->log("RST 00");
 
-            this->pc = 0x00;
-            return;
+            return this->RST(0x00);
         } break;
 
         case 0xC8: { // RET Z
             logger->log("RET Z");
 
+            this->pc++;
+
             // Check if the zero flag is set
             if(this->getZero() == 1) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Zero flag is not set, skipping RET Z");
-                this->pc += 2;
                 return;
             }
 
@@ -662,8 +661,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xCF: { // RST 08
             logger->log("RST 08");
 
-            this->pc = 0x08;
-            return;
+            return this->RST(0x08);
         } break;
 
         /*
@@ -673,13 +671,13 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD0: { // RET NC
             logger->log("RET NC");
 
+            this->pc++;
+
             // Check if the carry flag is not set
             if(this->getCarry() == 0) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Carry flag is set, skipping RET NC");
-                this->pc += 2;
                 return;
             }
         } break;
@@ -731,20 +729,19 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xD7: { // RST 10
             logger->log("RST 10");
 
-            this->pc = 0x10;
-            return;
+            return this->RST(0x10);
         } break;
 
         case 0xD8: { // RET C
             logger->log("RET C");
 
+            this->pc++;
+
             // Check if the carry flag is set
             if(this->getCarry() == 1) {
-                this->pc++;
                 return this->RET();
             } else {
                 logger->log("Carry flag is not set, skipping RET C");
-                this->pc += 2;
                 return;
             }
         } break;
@@ -792,8 +789,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xDF: { // RST 18
             logger->log("RST 18");
 
-            this->pc = 0x18;
-            return;
+            return this->RST(0x18);
         } break;
 
         /*
@@ -840,8 +836,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xE7: { // RST 20
             logger->log("RST 20");
 
-            this->pc = 0x20;
-            return;
+            return this->RST(0x20);
         } break;
 
         case 0xE8: { // ADD SP, e8
@@ -881,8 +876,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xEF: { // RST 28
             logger->log("RST 28");
 
-            this->pc = 0x28;
-            return;
+            return this->RST(0x28);
         } break;
 
         /*
@@ -938,8 +932,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xF7: { // RST 30
             logger->log("RST 30");
 
-            this->pc = 0x30;
-            return;
+            return this->RST(0x30);
         } break;
 
         case 0xF8: { // LD HL, SP + e8
@@ -987,8 +980,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
         case 0xFF: { // RST 38
             logger->log("RST 38");
 
-            this->pc = 0x38;
-            return;
+            return this->RST(0x38);
         } break;
     }
 
@@ -1048,6 +1040,22 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
         }
     }
 
+    if(high == 0x2) {
+        if(low <= 0x7) { // SLA r
+            uint8_t& r = this->getArith8Operand(low);
+            logger->log("SLA r with r: " + intToHex(r));
+
+            this->pc ++;
+            return this->SLA(r);
+        } else { // SRA r
+            // uint8_t& r = this->getArith8Operand(low - 0x8);
+            // logger->log("SRA r with r: " + intToHex(r));
+
+            // this->pc ++;
+            // return this->SRA(r);
+        }
+    }
+
     if(high == 0x3) { // SWAP r
         if(low <= 0x7) {
             this->pc ++;
@@ -1087,6 +1095,19 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
         } else {
             logger->log("RES " + to_string(((high * 2) - (0x8 * 2) + 1)) + ", r with r: " + intToHex(r));
             return this->RES((high * 2) - (0x8 * 2) + 1, r);
+        }
+    }
+
+    if(high >= 0xC && high <= 0xF) {
+        this->pc ++;
+        uint8_t& r = this->getArith8Operand(low - (low <= 0x7 ? 0 : 0x8));
+
+        if(low <= 0x7) {
+            logger->log("SET " + to_string(((high * 2) - (0xC * 2))) + ", r with r: " + intToHex(r));
+            return this->SET((high * 2) - (0xC * 2), r);
+        } else {
+            logger->log("SET " + to_string(((high * 2) - (0xC * 2) + 1)) + ", r with r: " + intToHex(r));
+            return this->SET((high * 2) - (0xC * 2) + 1, r);
         }
     }
 
@@ -1768,6 +1789,54 @@ void CPU::RES(const uint8_t &bit, uint8_t &r) {
 
 /*
 
+    RST
+
+*/
+
+void CPU::RST(const uint8_t &adr) {
+    this->pc ++;
+
+    // Push the current program counter onto the stack
+    this->PUSH(this->pc >> 8, this->pc & 0xFF);
+
+    // Set the program counter to the address of the RST instruction
+    this->pc = (uint16_t) adr;
+}
+
+/*
+
+    SLA
+
+*/
+
+void CPU::SLA(uint8_t &r) {
+    // Shift r left
+    this->resetCarry();
+
+    if(r & 0x80) this->setCarry();
+
+    r <<= 1;
+
+    this->resetSub();
+    this->resetHalfCarry();
+
+    if(r == 0) this->setZero();
+    else this->resetZero();
+}
+
+/*
+
+    SET
+
+*/
+
+void CPU::SET(const uint8_t &bit, uint8_t &r) {
+    // Set bit in r
+    r |= (1 << bit);
+}
+
+/*
+
     DUMP
 
 */
@@ -1775,7 +1844,7 @@ void CPU::RES(const uint8_t &bit, uint8_t &r) {
 void CPU::DUMPR() {
     // Dump registers
     logger->log("\033[34mDumping registers\033[0m");
-    logger->log("\033[34mA: " + intToHex(this->a) + " F: " + intToHex(this->f) + " B: " + intToHex(this->b) + " C: " + intToHex(this->c) + " D: " + intToHex(this->d) + " E: " + intToHex(this->e) + " H: " + intToHex(this->h) + " L: " + intToHex(this->l) + " SP: " + intToHex(this->sp) + " PC: " + intToHex(this->pc) + "\033[0m");
+    logger->log("\033[34mA: " + intToHex(this->a) + " F: " + intToHex(this->f) + " B: " + intToHex(this->b) + " C: " + intToHex(this->c) + " D: " + intToHex(this->d) + " E: " + intToHex(this->e) + " H: " + intToHex(this->h) + " L: " + intToHex(this->l) + " SP: " + intToHex(this->sp) + " PC: " + intToHex(this->pc) + " IME: " + to_string(this->ime) + "\033[0m");
 }
 
 void CPU::DUMPFlags() {
@@ -1821,6 +1890,11 @@ void CPU::disableInterrupt(const Interrupt interrupt) {
 }
 
 void CPU::triggerInterrupt(const Interrupt interrupt) {
+    // If interrupt vblank log warning
+    if(interrupt == Interrupt::VBlank) {
+        logger->warning("VBLANK interrupt triggered");
+    }
+
     this->gameboy->memory->fetch8(0xFF0F) |= (uint8_t) interrupt;
 }
 
