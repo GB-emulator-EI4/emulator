@@ -17,8 +17,12 @@
 
 */
 
-#define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
-// #define ROM_PATH "roms/games/Tetris (World) (Rev A) (without credits).gb"
+// #define ROM_PATH "roms/games/Tetris (World) (Rev A).gb"
+#define ROM_PATH "roms/games/Tetris (World) (Rev A) (without credits).gb"
+
+// #define ROM_PATH "roms/games/Mega Man - Dr. Wily's Revenge (Europe).gb"
+// #define ROM_PATH "roms/games/Legend of Zelda, The - Link's Awakening (France).gb"
+// #define ROM_PATH "roms/games/Super Mario Land (World).gb"
 
 /*
 

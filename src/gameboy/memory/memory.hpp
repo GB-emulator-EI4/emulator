@@ -95,6 +95,10 @@ class Memory {
         // ROM load functions
         void loadRom(const int &memoryBlock, const string &bootromPath, const int readOffset, const int &size);
 
+        void cycle();
+
+        char dmaLastValue = 0;
+
     private:
         // Gameboy ref
         Gameboy* gameboy;
