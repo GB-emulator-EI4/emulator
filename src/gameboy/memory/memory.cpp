@@ -73,6 +73,25 @@ void Memory::loadRom(const int &memoryBlock, const string &romPath, const int re
     logger->log("ROM loaded successfully");
 }
 
+void Memory::cycle() {
+    // Check if DMA source adress register has changed
+    if(this->io[0xFF46 - IO_OFFSET] != this->dmaLastValue) {
+        // Get the source address
+        const uint16_t sourceAddress = ((uint16_t) this->io[0xFF46 - IO_OFFSET]) << 8;
+
+        // Printf that DMA is starting
+        printf("DMA transfer started from address %04X\n", sourceAddress);
+
+        // Copy the data from the source to the destination
+        for(int i = 0; i < 0xA0; i++) {
+            this->oam[i] = this->fetch8(sourceAddress + i);
+        }
+
+        // Set the last value to the current value
+        this->dmaLastValue = this->io[0xFF46 - IO_OFFSET];
+    }
+}
+
 char& Memory::fetch8(const uint16_t &address) {
     // Check if the address is in the boot ROM
     if(ENABLE_BOOT_ROM && address < BOOTROM_OFFSET + BOOTROM_SIZE) {
@@ -231,6 +250,14 @@ char& Memory::fetchIOs(const uint16_t &address) {
 
     // Log if reading LCD status
     else if(address >= 0xFF40 && address <= 0xFF4B) logger->log("Warning: Reading LCD status at address " + intToHex(address));
+
+    // If reading DMA transfer
+    else if(address == 0xFF46) {
+        logger->log("Warning: Reading DMA transfer at address " + intToHex(address));
+
+        // Save the DMA current value
+        this->dmaLastValue = this->io[0xFF46 - IO_OFFSET];
+    }
 
     // Log if reading to select VRAM bank
     else if(address == 0xFF4F) logger->log("Warning: Writing to select VRAM bank at address " + intToHex(address));

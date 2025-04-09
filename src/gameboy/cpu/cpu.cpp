@@ -383,7 +383,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             logger->log("RLCA");
             this->pc++;
 
-            return this->RL(this->a);
+            return this->RLCA();
         } break;
 
         case 0x08: { // LD [n16], SP
@@ -572,7 +572,7 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
             return this->CALLN(address, this->getZero());
         } break;
 
-        case 0xC5: { // PUSH rr
+        case 0xC5: { // PUSH BC
             logger->log("PUSH rr");
 
             this->pc++;
@@ -605,8 +605,6 @@ void CPU::decodeAndExecute(const uint8_t& opcode) {
                 logger->log("Zero flag is not set, skipping RET Z");
                 return;
             }
-
-            return;
         } break;
 
         case 0xC9: { // RET
@@ -1063,7 +1061,7 @@ void CPU::decodeAndExecutePrefixed(const uint8_t& opcode) {
 
             logger->log("SWAP r with r: " + intToHex(r));
             return this->SWAP(r);
-        } else {
+        } else { // SLR
             this->pc ++;
             uint8_t& r = this->getArith8Operand(low - 0x8);
 
@@ -1696,7 +1694,7 @@ void CPU::RLA() {
 */
 
 void CPU::RLCA() {
-    // RLCA: Rotate left circular TODO check if this is correct
+    // RLCA: Rotate left circular
     const uint8_t carry = this->a & 0x80;
     this->resetCarry();
 

@@ -99,6 +99,9 @@ void Gameboy::runMcycle() {
         */
     
         if(this->cyclesCounter == 3) {
+            // Memory cycle
+            this->memory->cycle();
+
             // CPU cycle
             this->cpu->cycle();
 
