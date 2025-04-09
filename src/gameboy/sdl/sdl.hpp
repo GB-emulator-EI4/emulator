@@ -54,9 +54,9 @@ class SDLRenderer {
         // 3: black
 
         uint8_t palette[4][3] = {
-            { 255, 255, 255 },  
-            { 192, 192, 192 },  
-            { 96, 96, 96 },     
-            { 0, 0, 0 }         
+            { 200, 230, 170 },  // Lightest green 
+            { 160, 200, 100 },  // Light green 
+            { 48, 98, 48 },     // Dark green 
+            { 10, 40, 10 }      // Darkest green
         };
 };
