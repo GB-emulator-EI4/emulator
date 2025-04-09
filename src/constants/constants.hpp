@@ -24,6 +24,7 @@
 // #define ROM_PATH "roms/games/Legend of Zelda, The - Link's Awakening (France).gb"
 // #define ROM_PATH "roms/games/Super Mario Land (World).gb"
 
+
 /*
 
     Test ROMs path, use this #define instead of GAME_ROM_PATH to run test ROMs
@@ -76,4 +77,4 @@
 
 */
 
-#define ENABLE_LOGGING true
+#define ENABLE_LOGGING false
